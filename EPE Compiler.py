@@ -44,7 +44,11 @@ COLLAPSING (TIME_TO_COLLAPSE)
 
 """
 
+xoffset = 0
+yoffset = 0
 def parseEPEline(line: str) -> dict:
+    global xoffset, yoffset
+    
     line = line.upper()
     if line.startswith("FORCED "):
         line = line.replace("FORCED ", "FORCED")
@@ -76,6 +80,16 @@ def parseEPEline(line: str) -> dict:
     size_match = re.search(r"\(([^)]*)\)", line)
     if size_match:
         values = re.split(r"[ ,]+", size_match.group(1))
+        # For offset values and easy mass movement
+        if data["type"] == "OFFSET":
+            if len(values) >= 2:
+                xoffset += value[0];
+                yoffset += value[1];
+            return ""
+        if data["type"] == "ORIGIN":
+            xoffset = 0
+            yoffset = 0
+            return ""
         if len(values) >= 4:
             data["x"], data["y"], data["width"], data["height"] = values[:4]
         elif len(values) >= 3:
@@ -197,8 +211,8 @@ def compileEPEline(line:str) -> str:
     returned = ''
 
     _type = typeToName(parsed_line['type'])
-    _x = parsed_line['x']
-    _y = parsed_line['y']
+    _x = str(int(parsed_line['x']) + xoffset)
+    _y = str(int(parsed_line['y']) + yoffset)
     _width = parsed_line['width']
     _height = parsed_line['height']
     _color = parsed_line['color']
