@@ -61,6 +61,7 @@ def parseEPEline(line: str) -> dict:
         "color": None, "special value": None, "is moving": "false",
         "x travel distance": None, "y travel distance": None, "travel time": None,
         "is flickering": "false", "existing time": None, "missing time": None,
+        "is crumbling": "false", "crumble time": None,
         "is invisible": "false"
     }
     
@@ -106,6 +107,14 @@ def parseEPEline(line: str) -> dict:
         flicker_values = re.split(r"[ ,]+", flicker_match.group(1))
         if len(flicker_values) >= 2:
             data["existing time"], data["missing time"] = flicker_values[:2]
+    
+    # Match CRUMBLING tag
+    moving_match = re.search(r"CRUMBLING\s*\(([^)]*)\)", line)
+    if moving_match:
+        data["is crumbling"] = "true"
+        move_values = re.split(r"[ ,]+", moving_match.group(1))
+        if len(move_values) >= 1:
+            data["crumble time"] = move_values[:1]
     
     # Match INVISIBLE tag
     if "INVISIBLE" in line:
@@ -222,6 +231,8 @@ def compileEPEline(line:str) -> str:
         returned += f"ToFlickering({parsed_line['existing time']}, {parsed_line['missing time']});\n"
     if parsed_line["is invisible"] == "true":
         returned += "ToInvisible();\n"
+    if parsed_line["is crumbling"] == "true":
+        returned += f"ToCrumling({parsed_line['crumble time']});\n"
     
     return returned
 

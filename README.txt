@@ -1,71 +1,118 @@
-This  will  tell  you  the  syntax  to  use  for  the  EPE
+# EPE
+A toolkit for making simple parkour game using "Evan's Parkour Engine," All games made must be free for the public to play!
+I made the EPE to allow my friends to use the already simplistic engine in an even more simplistic way using a custom compiler that turns EPEScript into ProcessingJS which is injected into the middle of the plain engine and creates a parkour game for you.
 
-There  are  many  types  of  objects.
-Each  can  be  defined  by  an  x position, y position, width, and  height.
-There  is  also  the  optional  color, invisible, moving, blinking, and other things specific to each platform type.
+Introduction
+  The syntax is as simple as I could make it.
+  
+  One unit in space is 5 pixels.
+  One unit of speed is 1 pixel/frame.
+  The (x,y) position is the top left corner of a box.
+  The player's hitbox is a single point at it's center.
+  
+  Only the top most box has it's collision be in effect.
+  Jumpable boxes have a light outline and have no effect while player is not on the ground.
+  Forced boxes constantly have effect no matter the height of the player.
+  Solid boxes have collision from the side, meaning they cannot be walked into. These can be forced or jumpable.
+  Pad (non-solid) boxes have no side collision stopping the player from entering them, they can effect the player in many ways while they are inside. These can be forced or jumpable.
+  Deadly objects kill the player on touch.
+  
+  There's around two-dozen box types each with 5-6 possible modifiers.
+  Some boxes have special values like link codes that link them to other objects, force values to move the player by an amount, and positions to teleport the player to. These values always come right after the box name if the box type requires them.
+  Boxes can also change color (they all have defaults), be invisible, move, blinking in and out of existence, or crumble when touched.
+  Syntax explained in docs below.
 
-A standard unit is 5 pixels wide.
-Jumpable objects will have a light outline rather than a dark one.
-Collision is only counted for the top-most object so a path/platform/hole/hurdle/teleporter placed over a wall will allow the player to walk/jump through it.
+Syntax
+  The following are the main types of platforms. (A "~" following the name means it can be made FORCED)
+  WALL, HURDLE, PLATFORM, PATH, ERASER, HOLE, VOID, CHECKPOINT~, MUD~, BOOSTER~, TELEPORTER-IN~, TELEPORTER-OUT, TELEPORTER-OUT-A, TELEPORTER-TO~, WORMHOLE~, KEY, ACTIVE-KEY, LOCKED-WALL, LOCKED-ERASER, LOCKED-PLATFORM, ELASTIC-WALL, TRAMPOLINE, CONVEYOR~.
 
-Since you are pushed out of a platform BEFORE the current keyboard movements are checked, you can walk into a wall and wall run without falling into a hole or void below you. This also allows wall jumped.
+  You want to put the name of the box type, followed by any special value like link codes, force multipliers, or coords.
+  (commas are never needed!)
+  BOX_TYPE_NAME {SPECIAL_VALUE} (X POSITION, Y POSITION, WIDTH, HEIGHT)
 
-The player's hitbox is a single point at their center. So a player can squeeze through a single-unit gap.
+  Now any additional edits can be after, the most simple being "INVISIBLE" which can just be slapped at the end.
+  "WALL (10 10 10 10) INVISIBLE" creates a 10x10 wall at (10,10) that you cannot see but has all of its effects.
 
-Objects that can be jumped over have a light outline and ones that cannot have a dark outline. (Only important for players to know, and play-testing)
+  Next is "CRUMBLING" which takes one value, which is the time it takes to crumble in frames. It will shrink into nothing once touched and respawn after 5x the crumble time has passed.
+  "PLATFORM (10 10 20 20) CRUMBLING (60)" creates a platform that is 20x20 at (10,10) that shrinks into nothing after one second of being touched and reappears after 5 seconds.
 
-The player can only jump a max of 50 units.
+  I think you get the gist now, don't you?
+  INVISIBLE
+  CRUMLING (FRAMES IT TAKES TO CRUMBLE)
+  FLICKERING (FRAMES EXISTING, FRAMES MISSING)
+  MOVING (X TRAVEL DISTANCE, Y TRAVEL DISTANCE, TURN AROUND TIME)
+  COLOR (RED, GREEN, BLUE, OPACITY) or COLOR #COLOR_NAME
+  There's the five.
+  Flickering exists for FRAMES EXISTING amount of frames before vanishing for FRAMES MISSING amount of frames. It's not just visual, the object literally doesn't exist during MISSING phase.
+  Moving objects travel their x and y distance in the time given in frame before turning around and going back at the same rate.
+  Color values go from 0-255, and color names can be basic colors or names of platforms. You could make a path that has the color of a hole to trick people with that!
 
-"Movement Speed" is actually pixels/frame rather than units/frame. This makes "Movement Speed" = units per 5 frames. Without this a speed of just 1 is too fast :(
+  Finally, all the platform types. (all should have (X POS, Y POS, WIDTH, HEIGHT) after the special value, if it has one, or name.) (Special values seen below will be contained in curly braces)
+  ("FORCED?" means it can be if specified as a "FORCED____")
+  
+  WALL
+  SOLID, FORCED
 
-Right clicking hides/shows text boxes.
+  HURDLE
+  SOLID, JUMPABLE
 
-Pressing "[" and "]" lets you draw a rectangle between two opposite corners, and pressing ctrl give you a copy-able command to create an object there.
+  PLATFORM
+  PAD, FORCED
 
+  PATH
+  PAD, JUMPABLE
 
+  ERASER
+  DEADLY, SOLID
 
+  HOLE/VOID
+  DEADLY, JUMPABLE
 
+  ICE
+  PAD, NO FRICTION, FORCED?
 
+  MUD
+  PAD, SLOWS, FORCED?
 
+  TRAMPOLINE {STRENGTH} 
+  PAD, MAKES YOU JUMP
 
+  ELASTIC-WALL {STRENGTH}
+  SOLID, PUSHES YOU BACK, FORCED
 
+  BOOSTER {STRENGTH}
+  PAD, ACCELERATES YOU, FORCED?
 
+  CONVEYOR {FORCE} // format the force as "x,y" not "(x,y)" or "x y"
+  PAD, PUSHES YOU, FORCED?
 
+  TELEPORTER-TO {POSITION} // format the position as "x,y" not "(x,y)" or "x y"
+  PAD, TELEPORTS, FORCED?
 
+  TELEPORTER-IN {LINK CODE}
+  PAD, TELEPORTS, FORCED?
 
+  TELEPORTER-OUT {LINK CODE}
+  PAD, IS TELEPORTED TO
 
+  TELEPORTER-OUT-A {LINK CODE}
+  PAD, IS TELEPORTED TO, PRESERVES PROPORTIONS OF ENTRANCE
 
+  WORMHOLE {LINK CODE}
+  PAD, TELEPORTS TO AND FROM, FORCED?
 
+  KEY {KEY CODE}
+  PAD, SWITCHES BETWEEN ON AND OFF WHEN TOUCHED, STARTS NOT PRESSED
 
+  ACTIVE-KEY {KEY CODE}
+  PAD, SWITCHES BETWEEN ON AND OFF WHEN TOUCHED, STARTS PRE-PRESSED
 
+  LOCKED-WALL {KEY CODE}
+  SOLID (when not active), FORCED
 
+  LOCKED-ERASER {KEY CODE}
+  SOLID (when not active), FORCED (when not active), DEADLY
 
-Now onto actual syntax, you have 2 choices.
-OBJECT  X  Y  W  H           or           W*H  OBJECT  at (x,y)
-For the first one, order matters, but the second can be in any order since each element will have its own syntax and is more readable. For this we will be showing both. Although, be sure to declare which you are using with "MODE" gamerule.
-
-The most common differences between objects is if they can be jumped, if they kill, and if they are solid. A solid object cannot be walked thought (but can be jumped over if that's allowed). A non-solid object can be referred to as a "pad" or "platform" since it can be stood on. (If you jump onto a solid object, you cannot move without jumping again)
-
-There are a list of preset colors that can be used with #COLOR_NAME. Or if you want to make a lava wall that looks like a normal wall you can do #STONE, #GRAY, or just #WALL (yep, names of default platform colors exist too in here) And use #(R,G,B,A) for a custom color.
-
-Some objects require "link codes" which are strings that match to link to other platforms to make teleporter pairs, or lock-key pairs, etc. Checkpoints also have names that are displayed at the top when they are touched. ALL important strings are inputted as the first value followed by the rest. This isn't really important since the order can be whatever you want, but use quotes for this.
-
-There are some special tags you can add at the start or end, these are INVISIBLE, FORCED, JUMPABLE that have no extra data attached. FORCED means it cannot be jumped anymore. INVISIBLE objects will not be drawn but still have affects the same as before.
-Some other tags need extra data like ELASTIC(POWER), BLINKING(EXIST TIME, MISSING TIME), and MOVING(X DISTANCE, Y DISTANCE, TIME) which make objects behave in new ways.
-Elastic objects cause you to bounce off with force you walked into them with multiplied by the power. 
-Blinking objects exist for EXIST TIME frames before vanishing for MISSING TIME frames, they have no effects while missing.
-Finally, moving objects move for TIME to make it to their new point (X DISTANCE, Y DISTANCE) units away before turning around and repeating it backwards.
-
-
-
-Solid, cannot be jumped, and do nothing on contact.
-
-
-Solid, can be jumped, and do nothing on contact.
-
-
-Non-solid & do nothing on contact. (Dark outline)
-
-PATH (X_POSITION, Y_POSITION, WIDTH, HEIGHT) 
-Non-solid & do nothing on contact. (Light outline)
+  LOCKED-PLATFORM {KEY CODE}
+  PAD (when active, otherwise doesn't have any effect)
 

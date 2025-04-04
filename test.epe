@@ -1,5 +1,6 @@
 <START>
 
 WALL (10 10 10 10)
+check-point (-20, -20, 5, 5)
 
 <END>
