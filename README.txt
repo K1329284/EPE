@@ -121,5 +121,23 @@ What else?
   Your .epe file needs to have a <Start> and <End> tag.
   Gamerule setting happens before the <Start>
   Just say (rule name) = (value) on different lines for each rule you want to change from the default.
-  Here are the defaults:
-
+  Here are the defaults and rules for the less obvious ones:
+        TAB_NAME = Evan's Parkour Engine
+        DEBUG_MODE = false <<< Allows the use of the debug menu
+        PLAYER_STARTING_X_POSITION = 0
+        PLAYER_STARTING_Y_POSITION = 0
+        GRAVITY_STRENGTH = 1
+        PRINT_LAG_SPIKES = false
+        SQUISH_DOES_KILL = true <<< should getting stuck kill them?
+        OPENING_TEXT = WELCOME <<< the first thing they see
+        OPENING_TEXT_LIFESPAN = 1000 <<< how long it stays in frames
+        PLAYER_SPEED = 1
+        DRAW_LINK_CODES = true <<< should keys, locked boxes, teleporters, etc have their link codes shown?
+        FULL_SCREEN = true
+        WINDOW_WIDTH = window.innerWidth
+        WINDOW_HEIGHT = window.innerHeight
+        SHOW_TIMER = true <<< do you want the timer in the top right?
+        SHOW_DEATHS = true <<< do you want the death count in the top right?
+        SHOW_PERFORMANCE = false <<< do you want to see the red-black square that shows framerate?
+        SPEED_IS_LIMITED = true <<< elastic walls and boosters can make you really fast, should it be limited to a realistic speed?
+  Oh, and comments can be left with "//" or "#"
