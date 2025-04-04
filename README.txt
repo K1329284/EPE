@@ -116,3 +116,10 @@ Syntax
   LOCKED-PLATFORM {KEY CODE}
   PAD (when active, otherwise doesn't have any effect)
 
+What else?
+  So there are some more things, such as gamerules that you can change.
+  Your .epe file needs to have a <Start> and <End> tag.
+  Gamerule setting happens before the <Start>
+  Just say (rule name) = (value) on different lines for each rule you want to change from the default.
+  Here are the defaults:
+
