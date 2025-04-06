@@ -83,13 +83,13 @@ def parseEPEline(line: str) -> dict:
         # For offset values and easy mass movement
         if data["type"] == "OFFSET":
             if len(values) >= 2:
-                xoffset += value[0];
-                yoffset += value[1];
-            return ""
+                xoffset += int(values[0])
+                yoffset += int(values[1])
+            return False  # Return early for OFFSET, as it doesn't need further processing
         if data["type"] == "ORIGIN":
             xoffset = 0
             yoffset = 0
-            return ""
+            return False  # Return early for ORIGIN, as it resets offsets
         if len(values) >= 4:
             data["x"], data["y"], data["width"], data["height"] = values[:4]
         elif len(values) >= 3:
@@ -128,7 +128,7 @@ def parseEPEline(line: str) -> dict:
         data["is crumbling"] = "true"
         move_values = re.split(r"[ ,]+", moving_match.group(1))
         if len(move_values) >= 1:
-            data["crumble time"] = move_values[:1]
+            data["crumble time"] = move_values[0]  # Use the first value as crumble time, if available
     
     # Match INVISIBLE tag
     if "INVISIBLE" in line:
@@ -137,7 +137,7 @@ def parseEPEline(line: str) -> dict:
     return data
 
 def typeToName(type:str) -> str:
-    match type.replace("-", ""):
+    match type.replace("-", "").replace("_", "").replace("'", "").upper():  # Normalize the type for matching
         case "WALL":
             return "Wall"
         case "HURDLE" | "HURD":
@@ -146,7 +146,7 @@ def typeToName(type:str) -> str:
             return "Platform"
         case "PATH":
             return "Path"
-        case "ERASER" | "KILLERWALL" | "DEATHWALL" | "KILLBRICK":
+        case "ERASER" | "KILLERWALL" | "DEATHWALL" | "KILLBRICK" | "LAVA":
             return "Eraser"
         case "CHECKPOINT" | "SPAWNPOINT" | "SAVEPOINT" | "SAVESPOT": 
             return "Checkpoint"
@@ -204,8 +204,14 @@ def typeToName(type:str) -> str:
             return type
 
 def compileEPEline(line:str) -> str:
+    if not line or line.strip() == "":
+        return ""
+    elif  line.startswith('//') or line.startswith('#'):
+        return line.replace('#', '//') + "\n"  # Preserve comments in the output, replace # with // for JS compatibility
     parsed_line = parseEPEline(line)
     # Check if the line is valid
+    if not parsed_line:
+        return "" # Return empty string for OFFSET and ORIGIN
     if parsed_line['type'] == None:
         return f"println('invalid line: {line}');\n"
     returned = ''
@@ -223,7 +229,7 @@ def compileEPEline(line:str) -> str:
             returned += f'{_type}({_x}, {_y}, {_width}, {_height}, {_color});'
         
         case 'Checkpoint' | 'ForcedCheckpoint' | 'TeleporterIn' | 'TeleporterInForced' | 'TeleporterOut' | 'TeleporterOutA':
-            returned += f'{_type}({_x}, {_special}, {_y}, {_width if _width != None else '16'}, {_height if _height != None else '16'}, {_color});'
+            returned += f'{_type}({_x}, {_y}, {_special}, {_width if _width != None else '16'}, {_height if _height != None else '16'}, {_color});'
         
         case 'Key' | 'ActiveKey':
             returned += f'{_type}({_special}, {_x}, {_y}, {_width if _width != None else '6'}, {_height if _height != None else '6'}, {_color});'
@@ -246,7 +252,7 @@ def compileEPEline(line:str) -> str:
     if parsed_line["is invisible"] == "true":
         returned += "ToInvisible();\n"
     if parsed_line["is crumbling"] == "true":
-        returned += f"ToCrumling({parsed_line['crumble time']});\n"
+        returned += f"ToCrumbling({parsed_line['crumble time']});\n"
     
     return returned
 
@@ -302,7 +308,9 @@ def compileEPE(lines:list[str]) -> str:
         else:
             compiledLines += compileEPEline(line)
 
-    # Everything afte <END> is ignored, it can be used for comments or other non-code purposes, but will not be compiled into the final code.
+    print(compiledLines)
+
+    # Everything after <END> is ignored, it can be used for comments or other non-code purposes, but will not be compiled into the final code.
 
     # Everything after <START> and before <END> is EPE objects, we can now compile them into the final code
 
@@ -338,7 +346,6 @@ var do_draw_linking_codes = {gamerules["DRAW_LINK_CODES"]};
 ''' + engineCode + compiledLines
 
     # Add HTML wrapping
-    print(compiledLines)
     compiledLines = f'<!DOCTYPE html><html> <head><title>{gamerules['TAB_NAME']}</title> </head><body><style>' + "#canvas{ position:fixed; left:0; top:0; width:100%; height:100%; } html, body { overflow: hidden; margin: 0 !important; padding: 0 !important; }" + '</style><!--This draws the canvas on the webpage --><canvas id="mycanvas"></canvas></body><!-- Include the processing.js library --><!-- See https://khanacademy.zendesk.com/hc/en-us/articles/202260404-What-parts-of-ProcessingJS-does-Khan-Academy-support- for differences --><script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> <script>var programCode = function(processingInstance)' + '{with (processingInstance) {size(' + gamerules["WINDOW_WIDTH"] + ', ' + gamerules["WINDOW_HEIGHT"] + '); frameRate(60);  ' + compiledLines + '}};var canvas = document.getElementById(\'mycanvas\'); canvas.width = +' + f"{gamerules['WINDOW_WIDTH']}" + '; canvas.width = +' + f"{gamerules['WINDOW_HEIGHT']}" + '; var processingInstance = new Processing(canvas, programCode);</script></html>'
 
     # Attempt to open the file and write the compiled code to it
@@ -355,55 +362,52 @@ print("EPE (Evan's Parkour Engine) is a custom engine for simple parkour games."
 print("This script will compile EPE files into a format that can be used by the engine.")
 print("Please ensure that the EPE files are in the same folder as this script.")
 
-try: 
-    while True:
-        print("\nChecking for EPE files...")
-        EPEs = getEPE()
-        if len(EPEs) == 0:
-            print("No EPE files found in folder, please add them into the same folder as this script.")
-            input("Press Enter when ready...")
-            continue
-        elif len(EPEs) == 1:
-            print("Do you wish to compile the EPE file? (y/n) FILE: \"" + EPEs[0] + "\"")
-            choice = input("Enter y or n: ")
-            if choice.lower() == 'y':
-                attemptCompile = compileEPE(readEPE(EPEs[0]))
-                if attemptCompile == "SUCCESS":
-                    print("EPE file compiled successfully.")
-                    break
-                else:
-                    print("EPE file compilation failed. Error code: " + attemptCompile)
-                    input("Press Enter to try again...")
-                    continue
+while True:
+    print("\nChecking for EPE files...")
+    EPEs = getEPE()
+    if len(EPEs) == 0:
+        print("No EPE files found in folder, please add them into the same folder as this script.")
+        input("Press Enter when ready...")
+        continue
+    elif len(EPEs) == 1:
+        print("Do you wish to compile the EPE file? (y/n) FILE: \"" + EPEs[0] + "\"")
+        choice = input("Enter y or n: ")
+        if choice.lower() == 'y':
+            attemptCompile = compileEPE(readEPE(EPEs[0]))
+            if attemptCompile == "SUCCESS":
+                print("EPE file compiled successfully.")
+                break
             else:
-                input("No? Reseting...")
+                print("EPE file compilation failed. Error code: " + attemptCompile)
+                input("Press Enter to try again...")
                 continue
         else:
-            print("Mutliple EPE files found, please select one to compile:")
-            for i, file in enumerate(EPEs):
-                print(f"{i + 1}: {file}")
-            choice = input("Enter the number of the file you wish to compile: ")
-            try:
-                choice = int(choice) - 1
-                if choice < 0 or choice >= len(EPEs):
-                    raise ValueError("Invalid choice")
-            except ValueError:
-                print("Invalid input, please enter a number.")
-                exit(1)
-            print("Do you wish to compile the EPE file? (y/n) FILE: \"" + EPEs[choice] + "\"")
-            choice = input("Enter y or n: ")
-            if choice.lower() == 'y':
-                attemptCompile = compileEPE(readEPE(EPEs[0]))
-                if attemptCompile == "SUCCESS":
-                    print("EPE file compiled successfully.")
-                    break
-                else:
-                    print("EPE file compilation failed. Error code: " + attemptCompile)
-                    input("Press Enter to try again...")
-                    continue
+            input("No? Reseting...")
+            continue
+    else:
+        print("Mutliple EPE files found, please select one to compile:")
+        for i, file in enumerate(EPEs):
+            print(f"{i + 1}: {file}")
+        choice = input("Enter the number of the file you wish to compile: ")
+        try:
+            choice = int(choice) - 1
+            if choice < 0 or choice >= len(EPEs):
+                raise ValueError("Invalid choice")
+        except ValueError:
+            print("Invalid input, please enter a number.")
+            exit(1)
+        print("Do you wish to compile the EPE file? (y/n) FILE: \"" + EPEs[choice] + "\"")
+        choice = input("Enter y or n: ")
+        if choice.lower() == 'y':
+            attemptCompile = compileEPE(readEPE(EPEs[0]))
+            if attemptCompile == "SUCCESS":
+                print("EPE file compiled successfully.")
+                break
             else:
-                input("No? Reseting...")
+                print("EPE file compilation failed. Error code: " + attemptCompile)
+                input("Press Enter to try again...")
                 continue
-except Exception as e:
-    print("An error occurred: " + str(e))
+        else:
+            input("No? Reseting...")
+            continue
 input("Press Enter to exit...")

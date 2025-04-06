@@ -193,7 +193,7 @@ var millistart = millis();
 var player = {xpos:player_starting_x_position, ypos:player_starting_y_position, zpos:0, vel:0, alive:true, respawnTimer:timeToRespawn, spawnX:  player_starting_x_position, spawnY:  player_starting_y_position, spawnID: -1};
 var oldplayer = {xpos:0, ypos:0};
 var justLanded = 0;
-var buffer = -1;
+var buffer = -2;
 var deaths = 0;
 var index;
 var dx = 0, dy = 0, dz = 0, colli;

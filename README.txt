@@ -141,3 +141,6 @@ What else?
         SHOW_PERFORMANCE = false <<< do you want to see the red-black square that shows framerate?
         SPEED_IS_LIMITED = true <<< elastic walls and boosters can make you really fast, should it be limited to a realistic speed?
   Oh, and comments can be left with "//" or "#"
+  Please do enjoy, the EPE is months of work between classes by one guy, me, Evan.
+
+If you want to see an earlier version of the EPE with less platform types as a final product for ideas check out Septomolian Parkour "https://impossibleevan.itch.io/septomolian"

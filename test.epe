@@ -1,6 +1,9 @@
 <START>
 
+// This is a test level, check the README for syntax stuff
 WALL (10 10 10 10)
-check-point (-20, -20, 5, 5)
+OFFSET (-10 -10)
+WALL (10 10 10 10) CRUMBLING (60) COLOR (50, 30, 80)
+check_point "Hello!" (-20, -20, 5, 5)
 
 <END>

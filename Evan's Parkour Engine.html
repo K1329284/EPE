@@ -214,7 +214,7 @@ var millistart = millis();
 var player = {xpos:player_starting_x_position, ypos:player_starting_y_position, zpos:0, vel:0, alive:true, respawnTimer:timeToRespawn, spawnX:  player_starting_x_position, spawnY:  player_starting_y_position, spawnID: -1};
 var oldplayer = {xpos:0, ypos:0};
 var justLanded = 0;
-var buffer = -5;
+var buffer = -2;
 var deaths = 0;
 var index;
 var dx = 0, dy = 0, dz = 0, colli;
@@ -1721,5 +1721,7 @@ function Room(func,x,y,w,h,t,b,c){
 
 //}
 Wall(10, 10, 10, 10, None);
-println('unknown type: ' + 'CHECK');
+Wall(0, 0, 10, 10, color(50, 30, 80));
+ToCrumbling(60);
+Checkpoint(-30, -30, "HELLO!", 5, 5, None);
 }};var canvas = document.getElementById('mycanvas'); canvas.width = +window.innerWidth; canvas.width = +window.innerHeight; var processingInstance = new Processing(canvas, programCode);</script></html>
