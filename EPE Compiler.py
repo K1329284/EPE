@@ -70,11 +70,14 @@ def parseEPEline(line: str) -> dict:
     }
     
     # Match object type and optional special value
-    type_match = re.match(r"(\w+)(?:\s+(\"[^\"]*\"|[^()]*))?", line)
-    if type_match:
-        data["type"] = type_match.group(1)
-        if type_match.group(2):
-            data["special value"] = type_match.group(2).strip()
+    data["type"] = line.split(" ")[0]
+    for section in line.split(" ")[1:]:
+        if section.startswith("("):
+            break
+        if data["special value"] == None:
+            data["special value"] = section + " "
+        elif section != "":
+            data["special value"] += section + " "
     
     # Match (x, y, width, height)
     size_match = re.search(r"\(([^)]*)\)", line)
@@ -136,7 +139,10 @@ def parseEPEline(line: str) -> dict:
     
     return data
 
+import time
 def typeToName(type:str) -> str:
+    print(type.replace("-", "").replace("_", "").replace("'", "").upper())
+    time.sleep(0.01)  # Add a small delay to allow for debugging
     match type.replace("-", "").replace("_", "").replace("'", "").upper():  # Normalize the type for matching
         case "WALL":
             return "Wall"
@@ -152,14 +158,16 @@ def typeToName(type:str) -> str:
             return "Checkpoint"
         case "FORCEDCHECKPOINT" | "FORCEDSAVEPOINT" | "FORCEDSPAWNPOINT" | "FORCEDSAVESPOT":
             return "ForcedCheckpoint"
-        case "TELEPORTORIN" | "INTELEPORTOR" | "TPIN" | "INTP":
-            return "TeleportorIn"
-        case "TELEPORTOROUT" | "OUTTELEPORTOR" | "TPOUT" | "OUTTP":
-            return "TeleportorOut"
+        case "TELEPORTERIN" | "INTELEPORTER" | "TPIN" | "INTP":
+            return "TeleporterIn"
+        case "TELEPORTEROUT" | "OUTTELEPORTER" | "TPOUT" | "OUTTP":
+            return "TeleporterOut"
         case "TELEPORTERINFORCED" | "FORCEDTELEPORTERIN" | "FORCEDTPIN" | "FORCEDINTP" | "INTPFORCED" | "TPINFORCED":
-            return "TeleportorInForced"
+            return "TeleporterInForced"
         case "TELEPORTEROUTA" | "PROPORTIONALTELEPORTEROUT" | "PROPTELEPORTEROUT" | "TPOUTA" | "OUTTPA" | "PROPTPOUT" | "PROPOUTTP":
-            return "TeleportorOutA"
+            return "TeleporterOutA"
+        case "TELEPORTERTO" | "TOTELEPORTER":
+            return "TeleporterTo"
         case "KEY" | "BUTTON" | "LEVER" | "SWITCH":
             return "Key"
         case "ACTIVEKEY" | "ACTIVEBUTTON" | "ACTIVELEVER" | "ACTIVESWITCH":
@@ -194,7 +202,7 @@ def typeToName(type:str) -> str:
             return "Void"
         case "HOLE" | "PIT":
             return "Hole"
-        case "CONVERYOR" | "CONVEYORBELT" | "PUSHPAD":
+        case "CONVEYOR" | "CONVEYORBELT" | "PUSHPAD":
             return "Conveyor"
         case "FORCEDCONVEYOR" | "FORCEDCONVEYORBELT" | "FORCEDPUSHPAD":
             return "ForcedConveyor"
@@ -236,6 +244,9 @@ def compileEPEline(line:str) -> str:
         
         case 'Trampoline' | 'Booster' | 'ForcedBooster' | 'LockedWall' | 'LockedEraser' | 'LockedPlatform' | 'ElasticWall':
             returned += f'{_type}({_special}, {_x}, {_y}, {_width}, {_height}, {_color});'
+        
+        case 'Conveyor' | 'ForcedConveyor' | 'TeleporterTo' | 'TeleporterFrom':
+            returned += f'{_type}({_x}, {_y}, {_width}, {_height}, {_special}, {_color});'
         
         case 'TextBox':
             returned += f'TextBox({_x}, {_y}, {_special}, {_width if _width != None else '20'}, {_color});'
@@ -327,8 +338,8 @@ def compileEPE(lines:list[str]) -> str:
 
 // Name your game and put here, and how long its there.
 var titleText = "{gamerules["OPENING_TEXT"]}"; var titleTime = {gamerules["OPENING_TEXT_LIFESPAN"]};
-var player_starting_x_position = {gamerules["PLAYER_STARTING_X_POSITION"]};
-var player_starting_y_position = {gamerules["PLAYER_STARTING_Y_POSITION"]};
+var player_starting_x_position = {int(gamerules["PLAYER_STARTING_X_POSITION"])*5};
+var player_starting_y_position = {int(gamerules["PLAYER_STARTING_Y_POSITION"])*5};
 var print_lag_spikes = {gamerules["PRINT_LAG_SPIKES"]};
 var player_walking_speed = {gamerules["PLAYER_SPEED"]};
 var gravity_strength = {gamerules["GRAVITY_STRENGTH"]};

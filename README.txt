@@ -1,5 +1,7 @@
-# EPE
-A toolkit for making simple parkour game using "Evan's Parkour Engine," All games made must be free for the public to play!
+Evan's Parkour Engine (EPE) Version 2.1
+by "Impossible" Evan Brockett
+
+A toolkit for making simple bird's-eye-view parkour game using "Evan's Parkour Engine," All games made must be free for the public to play!
 I made the EPE to allow my friends to use the already simplistic engine in an even more simplistic way using a custom compiler that turns EPEScript into ProcessingJS which is injected into the middle of the plain engine and creates a parkour game for you.
 
 Introduction
@@ -12,6 +14,7 @@ Introduction
   
   Only the top most box has it's collision be in effect.
   Jumpable boxes have a light outline and have no effect while player is not on the ground.
+  The player can only jump ~50 units with the normal jump.
   Forced boxes constantly have effect no matter the height of the player.
   Solid boxes have collision from the side, meaning they cannot be walked into. These can be forced or jumpable.
   Pad (non-solid) boxes have no side collision stopping the player from entering them, they can effect the player in many ways while they are inside. These can be forced or jumpable.
@@ -41,11 +44,62 @@ Syntax
   CRUMLING (FRAMES IT TAKES TO CRUMBLE)
   FLICKERING (FRAMES EXISTING, FRAMES MISSING)
   MOVING (X TRAVEL DISTANCE, Y TRAVEL DISTANCE, TURN AROUND TIME)
-  COLOR (RED, GREEN, BLUE, OPACITY) or COLOR #COLOR_NAME
+  COLOR (RED, GREEN, BLUE, OPACITY) or COLOR (#COLOR_NAME)
   There's the five.
   Flickering exists for FRAMES EXISTING amount of frames before vanishing for FRAMES MISSING amount of frames. It's not just visual, the object literally doesn't exist during MISSING phase.
   Moving objects travel their x and y distance in the time given in frame before turning around and going back at the same rate.
   Color values go from 0-255, and color names can be basic colors or names of platforms. You could make a path that has the color of a hole to trick people with that!
+  Here's all color presets (#):
+    WALL
+    STONE
+    ERASER
+    LAVA
+    HOLE
+    DIRT
+    VOID
+    CHECKPOINT
+    MUD
+    ICE
+    BOOSTER
+    TRAMPOLINE
+    TELEPORTER
+    DIAMOND
+    SULFUR
+    CONVEYOR
+    LOCKED_PLATFORM
+    SILVER
+    GOLD
+    KEY
+    LOCKED_WALL
+    BASALT
+    LOCKED_ERASER
+    MAGMA
+    WORMHOLE
+    OBSIDIAN
+    FAINT
+    TELEPORTER_TO
+    OCEAN
+    WIN
+    AETHER
+
+    BLACK
+    GRAY
+    WHITE
+    RED
+    ORANGE
+    YELLOW
+    CHART
+    GREEN
+    JADE
+    CYAN
+    AZURE
+    BLUE
+    PURPLE
+    MAGENTA
+    ROSE
+    PINK
+    TAN
+    BROWN
 
   Finally, all the platform types. (all should have (X POS, Y POS, WIDTH, HEIGHT) after the special value, if it has one, or name.) (Special values seen below will be contained in curly braces)
   ("FORCED?" means it can be if specified as a "FORCED____")
@@ -73,6 +127,9 @@ Syntax
 
   MUD
   PAD, SLOWS, FORCED?
+
+  CHECKPOINT {MESSAGE} // Message must be inside quotes
+  PAD, SETS SPAWN, FORCED?
 
   TRAMPOLINE {STRENGTH} 
   PAD, MAKES YOU JUMP

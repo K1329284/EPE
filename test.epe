@@ -1,9 +1,60 @@
-<START>
+TAB_NAME = Sky Climb
+OPENING_TEXT = Welcome to Sky Climb! Reach the Aether platform to win.
+PLAYER_STARTING_X_POSITION = 100
+PLAYER_STARTING_Y_POSITION = 15
+SHOW_TIMER = true
+SHOW_DEATHS = true
 
-// This is a test level, check the README for syntax stuff
-WALL (10 10 10 10)
-OFFSET (-10 -10)
-WALL (10 10 10 10) CRUMBLING (60) COLOR (50, 30, 80)
-check_point "Hello!" (-20, -20, 5, 5)
+<Start>
 
-<END>
+// deadly background
+VOID (-1000 -1000 2000 2000)
+
+// Spawn point (basic safe platform)
+PATH (10 90 10 10)
+
+// Step-up parkour
+PATH (20 80 10 10)
+PATH (30 70 10 10)
+PATH (40 60 10 10)
+
+// Crumbling jumpable challenge
+PATH (50 50 10 10) CRUMBLING (30)
+PATH (60 40 10 10) CRUMBLING (30)
+PATH (70 30 10 10) CRUMBLING (30)
+
+// Flickering jumps
+PATH (80 20 10 10) FLICKERING (60 60)
+PATH (90 10 10 10) FLICKERING (60 60)
+
+// Mid-level checkpoint
+CHECKPOINT "BONER I HAVE" (95 5 10 10)
+
+// Conveyor section
+CONVEYOR 1,0 (110 5 10 10)
+CONVEYOR 1,0 (120 5 10 10)
+CONVEYOR 1,0 (130 5 10 10)
+CONVEYOR 1,0 (140 5 10 10)
+
+// Deadly gap
+HOLE (150 5 10 10)
+HOLE (160 5 10 10)
+
+// Trampoline jump
+TRAMPOLINE 6 (170 5 10 10)
+
+// Recovery checkpoint
+CHECKPOINT "NIGGERS SUCK" (180 30 10 10)
+
+// Key & teleport puzzle
+KEY 7 (190 30 10 10)
+LOCKED-PLATFORM 7 (200 30 10 10)
+TELEPORTER-IN 88 (210 30 10 10)
+TELEPORTER-OUT 88 (10 90 10 10)
+
+// Final stretch
+PATH (220 20 10 10)
+PATH (230 10 10 10)
+PATH (240 0 10 10) COLOR (#AETHER)
+
+<End>
