@@ -200,4 +200,15 @@ What else?
   Oh, and comments can be left with "//" or "#"
   Please do enjoy, the EPE is months of work between classes by one guy, me, Evan.
 
+Obviously, there is also a built in editor called "EPE Editor.html" included in this folder. Here is how to use it:
+  Using the '[' and ']' keys allows you to control the size of a rectangle called the "creator".
+  Pressing the 'debug' button in the bottom left allows for a variety of controls.
+
+  'free-cam' -> allows to look around and edit without moving the player.
+  'put player' -> puts the player at the location of the free-cam position.
+  'get code' -> prints the .epe formatted code with spots to edit things that are advanced. (anything with a special value)
+  
+  The rest make sense based off their names or you can test them out :3
+  It's intended to be used to make single areas, exported, then using OFFSET(X,Y) to place it where needed.
+
 If you want to see an earlier version of the EPE with less platform types as a final product for ideas check out Septomolian Parkour "https://impossibleevan.itch.io/septomolian"
