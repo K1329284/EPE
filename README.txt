@@ -1,8 +1,9 @@
 Evan's Parkour Engine (EPE) Version 2.1
 by "Impossible" Evan Brockett
+(occasionally informal)
 
-A toolkit for making simple bird's-eye-view parkour game using "Evan's Parkour Engine," All games made must be free for the public to play!
-I made the EPE to allow my friends to use the already simplistic engine in an even more simplistic way using a custom compiler that turns EPEScript into ProcessingJS which is injected into the middle of the plain engine and creates a parkour game for you.
+A toolkit for making simple bird's-eye-view parkour games using "Evan's Parkour Engine." All games made with this engine must be free for the public to play!
+I created the EPE to help my friends easily use the engine with a custom compiler that converts EPEScript into ProcessingJS, generating a parkour game.
 
 Introduction
   The syntax is as simple as I could make it.
@@ -10,7 +11,7 @@ Introduction
   One unit in space is 5 pixels.
   One unit of speed is 1 pixel/frame.
   The (x,y) position is the top left corner of a box.
-  The player's hitbox is a single point at it's center.
+  The player's hitbox is a single point at its center.
   
   Only the top most box has it's collision be in effect.
   Jumpable boxes have a light outline and have no effect while player is not on the ground.
@@ -26,11 +27,12 @@ Introduction
   Syntax explained in docs below.
 
 Syntax
-  The following are the main types of platforms. (A "~" following the name means it can be made FORCED)
+  Comments can be added using "//" or "#".
+  The following are the main types of platforms. A '~' following the name indicates that the platform can be made FORCED, meaning its effect applies regardless of the player's height or position.
   WALL, HURDLE, PLATFORM, PATH, ERASER, HOLE, VOID, CHECKPOINT~, MUD~, BOOSTER~, TELEPORTER-IN~, TELEPORTER-OUT, TELEPORTER-OUT-A, TELEPORTER-TO~, WORMHOLE~, KEY, ACTIVE-KEY, LOCKED-WALL, LOCKED-ERASER, LOCKED-PLATFORM, ELASTIC-WALL, TRAMPOLINE, CONVEYOR~.
 
   You want to put the name of the box type, followed by any special value like link codes, force multipliers, or coords.
-  (commas are never needed!)
+  Commas are not required.
   BOX_TYPE_NAME {SPECIAL_VALUE} (X POSITION, Y POSITION, WIDTH, HEIGHT)
 
   Now any additional edits can be after, the most simple being "INVISIBLE" which can just be slapped at the end.
@@ -41,7 +43,7 @@ Syntax
 
   I think you get the gist now, don't you?
   INVISIBLE
-  CRUMLING (FRAMES IT TAKES TO CRUMBLE)
+  CRUMBLING (FRAMES IT TAKES TO CRUMBLE)
   FLICKERING (FRAMES EXISTING, FRAMES MISSING)
   MOVING (X TRAVEL DISTANCE, Y TRAVEL DISTANCE, TURN AROUND TIME)
   COLOR (RED, GREEN, BLUE, OPACITY) or COLOR (#COLOR_NAME)
@@ -101,7 +103,10 @@ Syntax
     TAN
     BROWN
 
-  Finally, all the platform types. (all should have (X POS, Y POS, WIDTH, HEIGHT) after the special value, if it has one, or name.) (Special values seen below will be contained in curly braces)
+  Finally, all the platform types.
+  All should have (X POS, Y POS, WIDTH, HEIGHT) after the special value, if it has one, or name.
+  Special values seen below will be contained in curly braces. 
+  Any positional special values must be formatted as "x,y" (destination coordinates) not "(x,y)" or "x y" because the parser expects a comma-separated string without spaces or parentheses.
   ("FORCED?" means it can be if specified as a "FORCED____")
   
   WALL
@@ -137,13 +142,13 @@ Syntax
   ELASTIC-WALL {STRENGTH}
   SOLID, PUSHES YOU BACK, FORCED
 
-  BOOSTER {STRENGTH}
+  BOOSTER {STRENGTH} // Strength is a number
   PAD, ACCELERATES YOU, FORCED?
 
-  CONVEYOR {FORCE} // format the force as "x,y" not "(x,y)" or "x y"
+  CONVEYOR {FORCE} // Formatted as a positional value according to the above rule.
   PAD, PUSHES YOU, FORCED?
 
-  TELEPORTER-TO {POSITION} // format the position as "x,y" not "(x,y)" or "x y"
+  TELEPORTER-TO {POSITION} // Format position according to the above rule.
   PAD, TELEPORTS, FORCED?
 
   TELEPORTER-IN {LINK CODE}
@@ -179,14 +184,14 @@ What else?
   Gamerule setting happens before the <Start>
   Just say (rule name) = (value) on different lines for each rule you want to change from the default.
   Here are the defaults and rules for the less obvious ones:
-        TAB_NAME = Evan's Parkour Engine
+        TAB_NAME = "Evan's Parkour Engine"
         DEBUG_MODE = false <<< Allows the use of the debug menu
         PLAYER_STARTING_X_POSITION = 0
         PLAYER_STARTING_Y_POSITION = 0
         GRAVITY_STRENGTH = 1
         PRINT_LAG_SPIKES = false
         SQUISH_DOES_KILL = true <<< should getting stuck kill them?
-        OPENING_TEXT = WELCOME <<< the first thing they see
+        OPENING_TEXT = "WELCOME" <<< the first thing they see
         OPENING_TEXT_LIFESPAN = 1000 <<< how long it stays in frames
         PLAYER_SPEED = 1
         DRAW_LINK_CODES = true <<< should keys, locked boxes, teleporters, etc have their link codes shown?
@@ -197,8 +202,7 @@ What else?
         SHOW_DEATHS = true <<< do you want the death count in the top right?
         SHOW_PERFORMANCE = false <<< do you want to see the red-black square that shows framerate?
         SPEED_IS_LIMITED = true <<< elastic walls and boosters can make you really fast, should it be limited to a realistic speed?
-  Oh, and comments can be left with "//" or "#"
-  Please do enjoy, the EPE is months of work between classes by one guy, me, Evan.
+  I hope you enjoy using the EPE. It represents months of work completed between classes by its creator, Evan.
 
 Obviously, there is also a built in editor called "EPE Editor.html" included in this folder. Here is how to use it:
   Using the '[' and ']' keys allows you to control the size of a rectangle called the "creator".
@@ -211,4 +215,4 @@ Obviously, there is also a built in editor called "EPE Editor.html" included in 
   The rest make sense based off their names or you can test them out :3
   It's intended to be used to make single areas, exported, then using OFFSET(X,Y) to place it where needed.
 
-If you want to see an earlier version of the EPE with less platform types as a final product for ideas check out Septomolian Parkour "https://impossibleevan.itch.io/septomolian"
+If you want to see an earlier version of the EPE in action, which served as a foundation for the current engine and had fewer platform types along with 22 levels for inspiration, check out Septomolian Parkour at "https://impossibleevan.itch.io/septomolian". This earlier project showcases the evolution of ideas that led to the creation of the EPE.
