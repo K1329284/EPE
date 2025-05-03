@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html> 
+  <head>
+    <title>Septomolian Parkour</title> 
+  </head>
+  <body>
+	<!--This draws the canvas on the webpage -->
+    <canvas id="mycanvas"></canvas> 
+  </body>
+ 
+  <!-- Include the processing.js library -->
+  <!-- See https://khanacademy.zendesk.com/hc/en-us/articles/202260404-What-parts-of-ProcessingJS-does-Khan-Academy-support- for differences -->
+  <script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> 
+  <script>
+  var programCode = function(processingInstance) {
+    with (processingInstance) {
+      size(400, 400); 
+      frameRate(60);
+        
+      // Paste code from Khan Academy here:
+      var isListening = false;
+// Chapter One Record: 2:14:500
+
+//{
+var keys = [], pkeys = [], pressed = false, released = false, mouseWasPressed = false;
+
+var W = 87, A = 65, S = 83, D = 68, Q = 81, E = 69, Z = 90, X = 86, C = 67, R = 82, F = 70, V = 86, T = 84, Y = 89, U = 85, I = 73, O = 79, P = 80, G = 71, H = 72, J = 74, K = 75, L = 76, B = 66, M = 78, N = 77, SPACE = 32;
+
+for(var i = 0; i < 256; i++){
+    keys.push(false);
+}
+
+function isDown(KEY){
+    return keys[KEY];
+}
+
+function wasPressed(KEY){
+    return keys[KEY] && !pkeys[KEY];
+}
+
+function wasReleased(KEY){
+    return !keys[KEY] && pkeys[KEY];
+}
+
+
+// Button Class {
+var Button = function(xpos,ypos,wdt,hgt,txt,tsz,col,stk,thk,cnr,aln,txtcol){
+    this.xpos = xpos;
+    this.ypos = ypos;
+    this.width = wdt ? wdt : 100;
+    this.height = hgt ? hgt : 50;
+    this.color = col ? col : color(200,200,200);
+    this.stroke = stk ? stk : color(0,0,0);
+    this.thickness = thk ? thk + 0.00000001 : 1;
+    this.text = txt ? txt : "Button";
+    this.textsize = tsz ? tsz : 25;
+    this.roundness = cnr ? cnr : 0;
+    this.align = aln ? aln : 0;
+    this.textcolor = txtcol ? txtcol : (stk ? stk : 0);
+};
+Button.prototype.draw = function() {
+    fill(this.color);
+    stroke(this.stroke);
+    strokeWeight(this.thickness);
+    rect(this.xpos*(1 + this.align*0.5), this.ypos*(1 + this.align*0.5), this.width, this.height, this.roundness);
+    fill(this.textcolor);
+    textAlign(CENTER,CENTER);
+    textSize(this.textsize);
+    text(this.text, this.xpos + this.width/2, this.ypos + this.height/2);
+    textAlign(LEFT,CENTER);
+};
+Button.prototype.isOver = function() {
+    return mouseX > this.xpos*(1 + this.align*0.5) && mouseY > this.ypos*(1 + this.align*0.5) && mouseX < this.xpos*(1 + this.align*0.5) + this.width && mouseY < this.ypos*(1 + this.align*0.5) + this.height;
+};
+Button.prototype.isPressed = function() {
+    return this.isOver() && mouseIsPressed;
+};
+Button.prototype.isClicked = function() {
+    return this.isOver() && mouseIsPressed && !mouseWasPressed;
+};
+Button.prototype.isReleased = function() {
+    return this.isOver() && !mouseIsPressed && mouseWasPressed;
+};
+//}
+
+function YouNeedToRunThisEachFrameItMakesTheInputWork(){
+    if(pressed){
+        pressed = false;
+    }
+    
+    if(released){
+        released = false;
+    }
+    
+    pkeys = [];
+    
+    for(var i = 0; i < 256; i++){
+        pkeys[i] = keys[i];
+    }
+    
+    mouseWasPressed = mouseIsPressed;
+}
+
+keyPressed = function(){
+    keys[keyCode] = true;
+    pressed = keyCode;
+};
+keyReleased = function(){
+    keys[keyCode] = false;
+    released = keyCode;
+};
+//} Evan's Toolkit
+//{
+var debugMode = false;
+var timeToRespawn = 30;
+var pS = 30; // Player size (only visual)
+var speed = 1; // Player speed
+var G = 0.1; // Gravity
+//} Gamerules
+//{
+//{
+frameRate(60);
+var boxes = [];
+var floors = [];
+var time;
+var millistart = millis();
+var player = {xpos:-4950, ypos:100, zpos:0, vel:0, alive:true, respawnTimer:timeToRespawn, spawnX: -4950, spawnY:  100};
+var oldplayer = {xpos:0, ypos:0};
+var justLanded = 0;
+var buffer = -5;
+var deaths = 0;
+var index;
+var b; var newColor;
+//} Variable Declaration
+
+//{
+var notiTime = 3000; var notiText = '"Wake up! You need to get moving, WASD"';
+function setNotification(noti){
+    notiText = noti;
+    notiTime = 1000;
+}
+function drawNotification(){
+    notiTime -= 5;
+    textSize(20);
+    textAlign(LEFT, TOP);
+    fill(255, 255, 255, notiTime);
+    for(var i = -1; i <= 1; i++){
+        for(var j = -1; j <= 2; j++){
+            text(notiText, 5+i, 0+j);
+        }
+    }
+    
+    fill(0, 0, 0, notiTime);
+    text(notiText, 5, 0);
+}
+//} Notifications
+
+//{
+var titleTime = 1500; var titleText = 'Chapter 1: Wake up!';
+function setTitle(noti){
+    titleText = noti;
+    titleTime = 1500;
+}
+function drawTitle(){
+    titleTime -= 5;
+    textSize(30);
+    textAlign(CENTER, CENTER);
+    fill(0,0,0,titleTime);
+    noStroke();
+    rect(0,0,width,height);
+    fill(255, 255, 255, titleTime);
+    text(titleText, width/2, height/2);
+}
+//}
+
+//} Starting Variables
+//{
+
+//{
+function Box(x,y,w,h,col,coll,jumpable,deadly,message,isACheckpoint){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:jumpable, width:w, height:h, color:col, coll:coll, kills:deadly, isCheckpoint:isACheckpoint, message:message});
+}
+function Wall(x,y,w,h,c){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w*5, height:h*5, color:c ? c : 100, coll:true, kills:false, isCheckpoint:false, message:"This text shouldn't be here"});
+}
+function Platform(x,y,w,h,c){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w*5, height:h*5, color:c ? c : 100, coll:false, kills:false, isCheckpoint:false, message:"This text shouldn't be here"});
+}
+function Hurdle(x,y,w,h,c){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:true, width:w*5, height:h*5, color:c ? c : 100, coll:true, kills:false, isCheckpoint:false, message:"This text shouldn't be here"});
+}
+function Path(x,y,w,h,c){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:true, width:w*5, height:h*5, color:c ? c : 100, coll:false, kills:false, isCheckpoint:false, message:"This text shouldn't be here"});
+}
+function Eraser(x,y,w,h,c){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w*5, height:h*5, color:c ? c : color(255, 166, 0), coll:true, kills:true, isCheckpoint:false, message:"This text shouldn't be here"});
+}
+function Hole(x,y,w,h,c){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:true, width:w*5, height:h*5, color:c ? c : color(87, 58, 9), coll:false, kills:true, isCheckpoint:false, message:"This text shouldn't be here"});
+}
+function Void(x,y,w,h,c){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:true, width:w*5, height:h*5, color:c ? c : color(-100,-100,-100), coll:false, kills:true, isCheckpoint:false, message:"This text shouldn't be here"});
+}
+function Checkpoint(x,y,m,w,h,c){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:true, width:w ? w*5 : 80, height:h ? h*5 : 80, color:c ? c : color(117, 235, 106), coll:false, kills:false, isCheckpoint:true, message:m, textTrigger:false});
+}
+function Mud(x,y,w,h,c){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:true, width:w*5, height:h*5, color:c ? c : color(107, 87, 52), coll:false, kills:false, isCheckpoint:false, message:"This text shouldn't be here", slows:true});
+}
+function TeleporterIn(x,y,tc,w,h,c,i){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:true, width:w ? w*5 : 50, height:h ? h*5 : 50, color:c ? c : color(56, 235, 235), coll:false, kills:false, isCheckpoint:false, message:"This text shouldn't be here", slows:false, tpc:tc, tpDir:'in', isInvisible:i ? i : false});
+}
+function TeleporterOut(x,y,tc,w,h,c,i){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w ? w*5 : 50, height:h ? h*5 : 50, color:c ? c : color(56, 235, 235), coll:false, kills:false, isCheckpoint:false, message:"This text shouldn't be here", slows:false, tpc:tc, tpDir:'out', isInvisible:i ? i : false});
+}
+function TeleporterOutA(x,y,tc,w,h,c,i){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w ? w*5 : 50, height:h ? h*5 : 50, color:c ? c : color(56, 235, 235), coll:false, kills:false, isCheckpoint:false, message:"This text shouldn't be here", slows:false, tpc:tc, tpDir:'out', isExact:true, isInvisible:i ? i : false});}
+function TeleporterInForced(x,y,tc,w,h,c,i){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w ? w*5 : 50, height:h ? h*5 : 50, color:c ? c : color(56, 235, 235), coll:false, kills:false, isCheckpoint:false, message:"This text shouldn't be here", slows:false, tpc:tc, tpDir:'in', isInvisible:i ? i : false});
+}
+//} Basic Unmovable Boxes
+
+//{
+function TextTrigger(x,y,m,w,h){
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:true, width:w ? w*5 : 80, height:h ? h*5 : 80, color:color(255, 255, 255,0), coll:false, kills:false, isCheckpoint:false, message:m, isTextTrigger:true});
+}
+//} Triggers
+
+//{
+function Floor(x,y,w,h,c){
+    floors.push({xpos:x*5, ypos:y*5, width:w*5, height:h*5, color:c ? c : color(194, 194, 194)});
+}
+//} Floors
+
+//} Object Creators
+
+//{
+//{Hole(-13,-6,42,56);
+Wall(-1005,-11,4,65);
+Wall(-1005,-11,4000,4);
+Wall(-1005,51,4000,4);
+Floor(-1005,-9,4000,62);//} Level 0: Background
+
+//{
+TextTrigger(-980,34,"Where am I?",5,16,color(168, 168, 168, 0));
+TextTrigger(-960,-6,"Hello?",5,16,color(168, 168, 168, 0));
+TextTrigger(-940,34,"Mysterious disembodied voice?",5,16,color(168, 168, 168, 0));
+TextTrigger(-920,-6,"Where did you go?",5,16,color(168, 168, 168, 0));
+
+for(var i = 0; i < 3; i++){
+    Wall(-980 + 40*i,-7,5,40);
+    Wall(-960 + 40*i,11,5,40);
+}
+//} Level 1: WASD to Move
+
+//{
+Checkpoint(-870,13,'"Press space to jump, my child"');
+Hurdle(-850,-6,5,56);
+Hurdle(-800,-6,5,56);
+Eraser(-750,-1,5,46);
+//} Level 2: Space to Jump
+
+//{
+Checkpoint(-734,13,'Level 3: Hot Walls');
+for(var i = 0; i < 5; i++){
+    Eraser(-700 + 30*i,-6,5,5 + i*9.7);
+    Eraser(-700 + 30*i,6 + i*9.7,5,44 - i*9.7);
+}
+Eraser(-688,22,10,10);
+Eraser(-658,30,10,10);
+Eraser(-627,38,10,10);
+Eraser(-597,42,10,10);
+//} Level 3: Hot Walls
+
+//{
+Checkpoint(-562,13,'Level 4: Swiss Minefield');
+for(var i = 0; i < 5; i++){
+    for(var j = 0; j < 5; j++){
+        if(i+j===3 || i%2===j%2){
+            Hole(-540 + i*22 + (j%2)*11,40 - j*11.5,10,10);}
+    }
+}
+Eraser(-480, 0, 5, 18);
+Eraser(-525, 35, 5, 13);
+Eraser(-449, 31, 17, 5);
+//} Level 4: Swiss Minefield
+
+//{
+Checkpoint(-424,13,'Level 5: Yin & Yang, Mud & Holes');
+Hole(-394, 22, 60, 28);
+Mud(-394, -6, 60, 28);
+Hole(-387, 0, 15, 15);
+Hole(-356, 0, 15, 15);
+Mud(-387, 28, 15, 15);
+Mud(-356, 28, 15, 15);
+//} Level 5: Mud Vortex
+
+//{
+Checkpoint(-321,13,'Level 6: This one is random everytime');
+Eraser(-291,-6,189,5);
+Eraser(-291,45,189,5);
+for(var i = 0; i < 10; i++){
+    Hole(-290 + i*20,-6 + constrain(round(random(-16,25)), 6, 15),7,35);
+}
+//} Level 6: Watch your step
+
+//{
+Void(-84,-7,68,58);
+Checkpoint(-93,14,'Level 7: Up and Overound');
+Wall(-88,-7,6,20);
+Wall(-88,31,6,20);
+Wall(-57,11,6,22);
+Eraser(-50,12,6,20);
+Eraser(-64,12,6,20);
+Wall(-64,5,20,6);
+Wall(-64,33,20,6);
+//} Level 7: Up and Overound
+
+//{
+Void(32,-7, 340,58);
+Hole(-16,-6,47,56);
+Wall(5,11,5,23);
+Eraser(5,5,5,5);
+Eraser(5,35,5,5);
+Wall(-19,-11,5,24);
+Wall(-19,31,5,24);
+Wall(30,-11,5,24);
+Wall(30,31,5,24);
+Checkpoint(-30,14, "Level 8: Play dumb, it works");
+Platform(-7,20,30,5);
+//} Level 8: Play dumb, it works
+
+var yOffset = 0;
+//{
+Checkpoint(30,14, "Level 9: Endurance & Donuts");
+for(var i = 0; i < 10; i++){
+    yOffset = random(-18,18);
+    Platform(70 + i*30,15 + yOffset,15,15);
+    Void(75 + i*30,20 + yOffset,5,5);
+}
+Eraser(370,-6,5,20);
+Eraser(370,30,5,20);
+//} Level 9: Endurance & Donuts
+
+//{
+var dialogue = ['"I can\'t believe he built this"','"Just to trap you"','"I know I have not spoken in a while"','"But these might test your patience"','"Good luck!"'];
+Checkpoint(384,14, "Level 10: A Chain of Events");
+Void(411,-7, 908,58);
+Eraser(409,-6,5,20);
+Eraser(409,30,5,20);
+for(var i = 0; i < 5; i++){
+    Path(420 + 42*i,18,15,10);
+    Wall(436 + 42*i,18,25,10);
+    TextTrigger(420 + 42*i,18,dialogue[i],15,10);
+    
+}
+//} Level 10: A Chain of Events
+
+//{
+Checkpoint(630,15, "Level 11: A worse chain of events");
+Eraser(409,-6,5,20);
+Eraser(409,30,5,20);
+for(var i = 0; i < 5; i++){
+    Path(647 + 42*i,19,15,8);
+    Eraser(663 + 42*i,18,25,10);
+}
+//} Level 11: A worse chain of events
+
+//{
+Checkpoint(857,15, "Level 12: A worser chain of... who cares");
+Eraser(409,-6,5,20);
+Eraser(409,30,5,20);
+for(var i = 0; i < 5; i++){
+    Path(647 + 42*i,19,15,8);
+    Eraser(663 + 42*i,18,25,10);
+}
+//} Level 12: A worser chain of... who cares
+
+//{
+Checkpoint(857,15, "Level 13: Panultimate Chain of Events");
+for(var i = 0; i < 5; i++){
+    Path(874 + 42*i,20,15,6);
+    Eraser(890 + 42*i,16,25,14);
+}
+//} Level 13: Panultimate Chain of Events
+
+//{
+Checkpoint(1084,15, "Level 14: Ultimate Chain of Events");
+for(var i = 0; i < 5; i++){
+    Path(1101 + 42*i,20,15,6);
+    Eraser(1101 + 42*i,0,20,6);
+    Eraser(1101 + 42*i,38,20,6);
+    Eraser(1117 + 42*i,16,25,14);
+}
+//} Level 14: Ultimate Chain of Events
+
+//{
+Floor(1311,-8,200,60,color(84, 176, 84));
+TeleporterIn(1324,-5,'park1',6,6);
+TeleporterOut(1324,43,'park2',6,6);
+TeleporterIn(1501,-5,'park2',6,6);
+TeleporterOut(1501,43,'park1',6,6);
+for(var i = 0; i < 200; i++){
+    Floor(1311 + random(0, 198),-8 + random(0,60),2,2,color(82, 168 + random(-5,5), 82));
+}
+for(var i = -1; i < 37; i++){
+    Path(1330 + i*5, 17, 5, 5, color(148, 148, 148));
+    Path(1327 + i*5, 22, 5, 5, color(148, 148, 148));
+}
+for(var i = 0; i < 7; i++){
+    Hurdle(1332 + i*25, -3, 15, 5, color(11, 99, 33));
+    Hurdle(1332 + i*25, 42, 15, 5, color(11, 99, 33));
+}
+Checkpoint(1311,14, "Level 15: Walk in the Park");
+Wall(1317,-7,5,20);
+Wall(1317,31,5,20);
+//} Level 15: Walk in the Park
+
+//{
+Void(1552,-7,300,58);
+Checkpoint(1509,14, "Level 16: Bug? Feature! Wall jumping...\nYou can wall run by walking at a wall.");
+Wall(1510,-7,5,20);
+Wall(1510,31,5,20);
+Wall(1530,19,70,6);
+Wall(1610,-7,5,20);
+Wall(1610,31,5,20);
+//} Level 16: Bug? Feature! Wall jumping...
+
+//{
+var xOffset = 0;
+var shrinkage = 3;
+Checkpoint(1610,14, "Level 18: A fine dash of line to climb in time");
+for(var i = 0; i < 7; i++){
+    Wall(1616 + xOffset,31, 25 - i*shrinkage,5);
+    Eraser(1616 + xOffset,8, 25 - i*shrinkage,5);
+    xOffset += 26 - i*shrinkage;
+    Eraser(1616 + xOffset,31, 25 - i*shrinkage,5);
+    Wall(1616 + xOffset,8, 25 - i*shrinkage,5);
+    xOffset += 26 - i*shrinkage;
+}
+//} Level 18: A fine dash of line to climb in time
+
+//{
+Checkpoint(1837,14, "Level 19: Subtlety in the crowd");
+Wall(1989,-7, 5,58);
+Wall(2013,-7, 5,58);
+Eraser(1992,-1, 5,46);
+Eraser(1992,-6, 5,5);
+Eraser(2010,-6, 5,5);
+Eraser(1992,45, 5,5);
+Eraser(2010,45, 5,5);
+Eraser(1997,45, 13,5);
+Eraser(1997,-6, 13,5);
+Eraser(2010,-1, 5,46);
+for(var i = 0; i < 8; i++){
+    TeleporterIn(1867 + i*15,-4, 'kill19');
+    TeleporterIn(1867 + i*15,38, 'kill19');
+}
+TeleporterIn(1957,38, 'pass19',10,10,color(87, 240, 232));
+boxes.splice(-4,1);
+TeleporterOut(1999,18, 'kill19',9,9);
+TeleporterOut(2020,18, 'pass19',9,9);
+//} Level 19: Subtlety in the crowd
+
+//{
+Checkpoint(2034,14, "Level 20: Illusions, the seclusion delusions");
+TeleporterIn(2027,36, 'pass20',10,10,color(87, 61, 13));
+Hole(2027,-2,10,10);
+var h = 2;
+for(var i = 0; i < 9; i++){
+    for(var j = 0; j < 4; j++){
+        Hole(2056 + i*15 + random(-h,h),-4 + j*14 + random(-h,h),10,10);
+    }
+}
+TeleporterOut(2200,18, 'pass20',9,9);
+Wall(2190,-7,5,58);
+//} Level 20: Illusions, the seclusion delusions
+
+
+//{
+var dialogue = ['"I am going to be honest here."','"He may have kept you contained..."','"And I may have freed you..."','"But I was thinking I could keep you."','"Just to... watch, you know?"','"And for that, I am sorry"','"But I can\'t let you leave"','"You will stay."','"Forever."','"Wait"','"You were not supposed to do that"','"Please stay"','"The world out there is dangerous"','"I need entertainment"','"I cannot risk taking another from him"','"I understand"','"You are a creature made to move forward"','"Goodbye..."','"Friend..."','"I will miss you."'];
+Checkpoint(2215,14, "Level 21: Good luck, my friend");
+TeleporterOutA(2283-12, 25, 'repeat21', 6,10,undefined,true);
+TeleporterIn(2307-12, 25, 'repeat21', 6,10,undefined,true);
+for(var i = 0; i < 10; i++){
+    Wall(2241 + i*12,-7 + 6*(i%2),5,52);
+    TextTrigger(2241 + 12*i, 46 - 52*(i%2), dialogue[i*2], 5, 4);
+    TextTrigger(2247 + 12*i, 20, dialogue[i*2+1], 5, 4);
+}
+//} Level 21: Good luck, my friend
+
+//{
+Checkpoint(2366,14, "Level 22: The Tunnel, the Exit, and Forever");
+Hurdle(2571,3,10,41);
+Wall(2471,3,10,41);
+Wall(2990,-7,5,58);
+for(var i = 0; i < 120; i++){
+    Wall(2366 + i*5,0,5,5);
+    Wall(2366 + i*5,39,5,5);
+}
+TeleporterInForced(2429, -6, 'loop22', 50,56,undefined,true);
+TeleporterOutA(2623, -6, 'loop22', 5,56,undefined,true);
+TeleporterInForced(2629, -6, 'loop22', 50,56,undefined,true);
+TextTrigger(2383, -6, "You: I see it, I see the exit", 5, 56);
+TextTrigger(2415, -6, "You: What was that wisper? 'Sizzle fist?'", 5, 56);
+//} Level 22: The Tunnel, the Exit, and Forever
+
+//} Chapter 1
+
+//{
+var xmove, ymove, zmove, iters, pdz, foo, move;
+function drawBox(i){
+    b = boxes[i];
+    if(!b.isInvisible){
+        fill(b.color);
+        strokeWeight(5);
+        if(!b.isTextTrigger){
+            stroke(lerpColor(b.color,color(255*(b.canBeJumped ? 1 : 0)),0.3));
+        }
+        else{
+            noStroke();
+            if(debugMode){
+                stroke(255,255,255);
+                strokeWeight(5);
+            }
+        }
+        
+        rect(b.xpos - player.xpos + width/2, b.ypos - player.ypos + height/2, b.width, b.height,5);
+    }
+}
+var f;
+function drawFloor(i){
+    f = floors[i];
+    fill(f.color);
+    noStroke();
+    rect(f.xpos - player.xpos + width/2, f.ypos - player.ypos + height/2, f.width, f.height);
+}
+var playerInside = false;
+function checkCollision(i){
+    b = boxes[i];
+    
+    playerInside = (b.xpos+buffer < player.xpos && player.xpos < b.xpos + b.width-buffer &&
+    b.ypos+buffer < player.ypos && player.ypos < b.ypos + b.height-buffer);
+    
+    return playerInside && (player.zpos > 2 ? !b.canBeJumped : true);
+}
+function checkCollisions(){
+    for(var i = boxes.length - 1; i >= 0 ; i--){
+        if(checkCollision(i)){
+            return {
+                collided:boxes[i].coll,
+                killed:boxes[i].kills, 
+                checkpoint:boxes[i].isCheckpoint,
+                wasJumpable:boxes[i].canBeJumped && boxes[i].coll,
+                boxID:i,
+                slows:!!boxes[i].slows
+            };
+        }
+        
+    }
+    return {collided:false, killed:false, checkpoint:false};
+}
+function drawPlayer(){
+    fill(255, 0, 0, 255 - 1.5*player.zpos);
+    stroke(168, 0, 0);
+    strokeWeight((5 + justLanded*5)*player.respawnTimer/timeToRespawn);
+    ellipse(width/2 - xmove/2, height/2 - ymove/2, (pS + player.zpos)*player.respawnTimer/timeToRespawn, (pS + player.zpos)*player.respawnTimer/timeToRespawn);
+    justLanded -= 1;
+}
+function displayTime(){
+    stroke(1);
+    strokeWeight(1);
+    fill(230, 230, 230);
+    rect(339,0,60,24);
+    fill(0, 0, 0);
+    textSize(12);
+    textAlign(CENTER, CENTER);
+    time = millis() - millistart;
+    text(floor(time/1000/60)+':'+floor(time/1000%60)+':'+floor(time%1000), 370, 8);
+    fill(200, 0, 0);
+    text(deaths + " deaths", 370, 18);
+}
+function drawGame(){
+    for(var i = 0; i < floors.length; i++){
+        drawFloor(i);
+    }
+    for(var i = 0; i < boxes.length; i++){
+        drawBox(i);
+    }
+    drawPlayer();
+    drawNotification();
+    displayTime();
+    drawTitle();
+    
+    fill(0);
+    text("You win!", 12700 - player.xpos, 300 - player.ypos);
+}
+function killPlayer(){
+    player.alive = false;
+    player.respawnTimer = timeToRespawn;
+    deaths += 1;
+}
+var dx = 0, dy = 0, dz = 0;
+function keyboardControl(){
+    if(isDown(LEFT) || isDown(A)){
+        dx += -1;}
+    if(isDown(RIGHT) || isDown(D)){
+        dx += 1;}
+    if(isDown(UP) || isDown(W)){
+        dy += -1;}
+    if(isDown(DOWN) || isDown(S)){
+        dy += 1;}
+    
+    if(checkCollisions().kills){
+        killPlayer();
+    }
+    else if((isDown(SHIFT) || isDown(SPACE)) && player.zpos < 1){
+        dz = 3;
+    }
+    if(wasReleased(CONTROL)){
+        isListening = true;
+    }
+}
+function movementMath(){
+    xmove = 0;
+    ymove = 0;
+    
+    if(!checkCollisions().wasJumpable){
+        xmove = dx*speed;
+        ymove = dy*speed;
+        player.xpos += xmove;
+        player.ypos += ymove;
+    }
+    
+    if(checkCollisions().slows){
+        dy *= 0.4;
+        dx *= 0.4;
+    }
+    else{
+        dy *= 0.8;
+        dx *= 0.8;
+    }
+    dz -= G;
+    
+    player.zpos += dz;
+    if(player.zpos < -1){
+        player.dz = 0;
+        player.zpos = 0;
+    }
+}
+function specialCollision(){
+    if(checkCollisions().killed){
+        killPlayer();
+    }
+    
+    foo = boxes[checkCollisions().boxID];
+    if(foo !== undefined){
+        if(foo.isCheckpoint){
+            player.spawnX = foo.xpos + foo.width/2;
+            player.spawnY = foo.ypos + foo.height/2;
+            setNotification(foo.message+"");
+        }
+        
+        if(foo.isTextTrigger){
+            setNotification(foo.message+"");
+            index = boxes.indexOf(foo);
+            boxes.splice(index, 1);
+        }
+        
+        if(foo.tpDir === 'in' && foo.tpc !== 0){
+            for(var i = 0; i < boxes.length; i++){
+                if(boxes[i].tpc){
+                    b = boxes[i];
+                    if(b.tpDir==='out' && foo.tpc===b.tpc){
+                        if(b.isExact){
+                            xOffset = constrain(player.xpos - foo.xpos, 0, b.width);
+                            yOffset = constrain(player.ypos - foo.ypos, 0, b.height);
+                            player.xpos = b.xpos + xOffset;
+                            player.ypos = b.ypos + yOffset; 
+                        }
+                        else{
+                            player.xpos = b.xpos + b.width/2;
+                            player.ypos = b.ypos + b.height/2;
+                        }
+                        break;
+                    }
+                }
+                else{
+                    continue;
+                }
+            }
+        }
+    }
+}
+function respawnMath(){
+    player.respawnTimer -= 1;
+        if(player.respawnTimer < 0){
+            player.alive = true;
+            player.xpos = player.spawnX;
+            player.ypos = player.spawnY;
+            player.respawnTimer = timeToRespawn;
+            player.zpos = 0;
+            dx = 0; dy = 0; dz = 0;
+        }
+}
+//} Function Declaration
+
+//player.xpos = 11000;
+draw = function() {
+    background(255);
+    fill(0);
+    drawGame();
+    if(player.alive){
+        specialCollision();
+        
+        iters = 0;
+        while(checkCollisions().collided && player.alive){
+            iters += 1;
+            player.xpos -= xmove;
+            if(checkCollisions().collided){
+                player.ypos -= ymove;
+                player.xpos += xmove;
+            }
+            if(iters > 1){
+                break;
+            }
+        } pdz = dz;
+        keyboardControl();
+        movementMath();
+    }
+    else{
+        respawnMath();
+    }
+    
+};
+
+    }};
+
+  // Get the canvas that ProcessingJS will use
+  var canvas = document.getElementById("mycanvas"); 
+  // Pass the function to ProcessingJS constructor
+  var processingInstance = new Processing(canvas, programCode); 
+  </script>
+</html>

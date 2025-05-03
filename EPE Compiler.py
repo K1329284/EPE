@@ -186,8 +186,10 @@ def typeToName(type:str) -> str:
             return "LockedPlatform"
         case "ELASTICWALL" | "BOUNCEWALL" | "RUBBERWALL":
             return "ElasticWall"
-        case "TEXTBOX" | "TEXTBOX":
+        case "TEXTBOX" | "TEXT":
             return "TextBox"
+        case "TEXTTRIGGER" | "MESSAGETRIGGER" | "TRIGGER":
+            return "TextTrigger"
         case "MUD" | "QUICKSAND" | "SLOWPAD":
             return "Mud"
         case "FORCEDMUD" | "FORCEDQUICKSAND" | "FORCEDSLOWPAD":
@@ -236,7 +238,7 @@ def compileEPEline(line:str) -> str:
         case 'Win' | 'Wall' | 'Hurdle' | 'Platform' | 'Path' | 'Eraser' | 'Hole' | 'Void' | 'Mud' | 'ForcedMud' | 'Ice' | 'ForcedIce' | 'Floor': 
             returned += f'{_type}({_x}, {_y}, {_width}, {_height}, {_color});'
         
-        case 'Checkpoint' | 'ForcedCheckpoint' | 'TeleporterIn' | 'TeleporterInForced' | 'TeleporterOut' | 'TeleporterOutA':
+        case 'Checkpoint' | 'ForcedCheckpoint' | 'TeleporterIn' | 'TeleporterInForced' | 'TeleporterOut' | 'TeleporterOutA' | 'TextTrigger':
             returned += f'{_type}({_x}, {_y}, {_special}, {_width if _width != None else '16'}, {_height if _height != None else '16'}, {_color});'
         
         case 'Key' | 'ActiveKey':
