@@ -1478,7 +1478,7 @@ var gPlaceholderSwitch = new Button(135, 5, 50, 20, "Template", 10);
 var deleteLastButton = new Button(200, 5, 50, 20, "Delete Last", 10);
 var undoLastDeleteButton = new Button(200, 35, 50, 20, "Undo Del", 10);
 g = Path;
-var age = 0; var citers = 0; var lastDeletedBox = null;
+var age = 0; var citers = 0; var previousDeletes = [];
 draw = function() {
     if(victory){
         background(240);
@@ -1657,12 +1657,14 @@ draw = function() {
                 }
             }
             else if(deleteLastButton.isReleased()){
-                lastDeletedBox = boxes.pop();
+                // Removing the last box from the array and putting it in a variable to undo it later
+                if(boxes.length > 0){
+                    previousDeletes.push(boxes.pop());
+                }
             }
             else if(undoLastDeleteButton.isReleased()){
-                if(lastDeletedBox !== null){
-                    boxes.push(lastDeletedBox);
-                    lastDeletedBox = null;
+                if(previousDeletes.length > 0){
+                    boxes.push(previousDeletes.pop());
                 }
             }
         }
