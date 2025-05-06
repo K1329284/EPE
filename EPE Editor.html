@@ -32,7 +32,7 @@ var show_timer = false;
 var show_deaths = false;
 var show_performance = true;
 var speed_is_limited = false;
-var final_script = "";
+var final_script = [];
 
 // Should the player die when squished by a moving wall?
 // If false it pushes the player inside the wall which may cause problems.
@@ -212,7 +212,7 @@ keyReleased = function(){
             }
         }
         else{
-            final_script += gName.toUpperCase() + " (" + (x1-width)/5 + " " + (y1-height)/5 + " " + (x2-x1)/5 + " " + (y2-y1)/5 + ")\n";
+            final_script.push(gName.toUpperCase() + " (" + (x1-width)/5 + " " + (y1-height)/5 + " " + (x2-x1)/5 + " " + (y2-y1)/5 + ")\n");
             if(debugMode){
                 g((x1-width)/5, (y1-height)/5, (x2-x1)/5, (y2-y1)/5);
             }
@@ -1478,7 +1478,7 @@ var gPlaceholderSwitch = new Button(135, 5, 50, 20, "Template", 10);
 var deleteLastButton = new Button(200, 5, 50, 20, "Delete Last", 10);
 var undoLastDeleteButton = new Button(200, 35, 50, 20, "Undo Del", 10);
 g = Path;
-var age = 0; var citers = 0; var previousDeletes = [];
+var age = 0; var citers = 0; var previousDeletes = []; var previousDeletedLines = [];
 draw = function() {
     if(victory){
         background(240);
@@ -1642,7 +1642,13 @@ draw = function() {
                 hyper = !hyper;
             }
             else if(compileButton.isReleased()){
-                println(final_script);
+                // seperate the lines of the final_script into an array
+                println("\n\n\n\n\n\n\n\n\n\n");
+                
+                // print each line of final_script
+                for(var i = 0; i < final_script.length; i++){
+                    println(final_script[i]);
+                }
             }
             else if(teleportButton.isReleased()){
                 if(freecamMode){
@@ -1660,11 +1666,13 @@ draw = function() {
                 // Removing the last box from the array and putting it in a variable to undo it later
                 if(boxes.length > 0){
                     previousDeletes.push(boxes.pop());
+                    previousDeletedLines.push(final_script.pop());
                 }
             }
             else if(undoLastDeleteButton.isReleased()){
                 if(previousDeletes.length > 0){
                     boxes.push(previousDeletes.pop());
+                    final_script.push(previousDeletedLines.pop());
                 }
             }
         }
