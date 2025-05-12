@@ -271,7 +271,7 @@ def compileEPEline(line:str) -> str:
 
 def compileEPE(lines:list[str]) -> str:
     gamerules:dict[str,str] = {
-        "TAB_NAME": "Evan's Parkour Engine",
+        "TAB_NAME": "",
         "DEBUG_MODE" : "false",
         "PLAYER_STARTING_X_POSITION": "0",
         "PLAYER_STARTING_Y_POSITION": "0",
@@ -333,6 +333,9 @@ def compileEPE(lines:list[str]) -> str:
     # This is a template for the EPE engine, it contains the basic ProcessingJS code for the EPE engine.
     with open(os.path.dirname(os.path.abspath(__file__)) + r"\empty_epe.txt", "r") as file:
         engineCode = file.read()
+
+    if not gamerules["TAB_NAME"]:
+        gamerules["TAB_NAME"] = input("Please enter a name for the game: ")
 
     # Add the gamerules to the top of the compiled code
     compiledLines = f'''
