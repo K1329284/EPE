@@ -1,38 +1,18 @@
-<!DOCTYPE html>
-<html> 
-  <head>
-    <title>EPE Editor</title> 
-  </head>
-  <body>
-	<!--This draws the canvas on the webpage -->
-    <canvas id="mycanvas"></canvas> 
-  </body>
- 
-  <!-- Include the processing.js library -->
-  <!-- See https://khanacademy.zendesk.com/hc/en-us/articles/202260404-What-parts-of-ProcessingJS-does-Khan-Academy-support- for differences -->
-  <script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> 
-  <script>
-  var programCode = function(processingInstance) {
-    with (processingInstance) {
-      size(600, 400); 
-      frameRate(60);
-        
-      // Paste code from Khan Academy here:
-      // Game Rules {
+<!DOCTYPE html><html> <head><title>Daily Parkour</title> </head><body><style>#canvas{ position:fixed; left:0; top:0; width:100%; height:100%; } html, body { overflow: hidden; margin: 0 !important; padding: 0 !important; }</style><!--This draws the canvas on the webpage --><canvas id="mycanvas"></canvas></body><!-- Include the processing.js library --><!-- See https://khanacademy.zendesk.com/hc/en-us/articles/202260404-What-parts-of-ProcessingJS-does-Khan-Academy-support- for differences --><script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> <script>var programCode = function(processingInstance){with (processingInstance) {size(window.innerWidth, window.innerHeight); frameRate(60);  
+// Game Rules
 
 // Name your game and put here, and how long its there.
-var titleText = ""; var titleTime = 0;
+var titleText = "WELCOME"; var titleTime = 1000;
 var player_starting_x_position = 0;
 var player_starting_y_position = 0;
 var print_lag_spikes = false;
 var player_walking_speed = 1;
 var gravity_strength = 1;
 var debugMode = true;
-var show_timer = false;
-var show_deaths = false;
-var show_performance = true;
-var speed_is_limited = false;
-var final_script = [];
+var show_timer = true;
+var show_deaths = true;
+var show_performance = false;
+var speed_is_limited = true;
 
 // Should the player die when squished by a moving wall?
 // If false it pushes the player inside the wall which may cause problems.
@@ -40,9 +20,6 @@ var squish_does_kill = true;
 // Set this to false when you want the players to use trial and error to figure things out or be given what links to.
 var do_draw_linking_codes = true;
 
-//}
-
-// Close this {
 frameRate(60);
 var hyper = false;
 var canDie = true;
@@ -1948,13 +1925,205 @@ function ToForced(){
 function ToJumpable(){
     b = boxes[boxes.length - 1];
     b.canBeJumped = true;
-}
-
-    }};
-
-  // Get the canvas that ProcessingJS will use
-  var canvas = document.getElementById("mycanvas"); 
-  // Pass the function to ProcessingJS constructor
-  var processingInstance = new Processing(canvas, programCode); 
-  </script>
-</html>
+}// RafaX9's Eight Jumps of Hell
+Checkpoint(-7, -7, "8 jumps of hell :D" , 14, 14, None);
+Path(87, -258, 15, 3, None);
+Path(92, -264, 5, 14, None);
+Path(92, -264, 5, 14, None);
+Path(111, -258, 12, 3, None);
+Path(134, -259, 3, 3, None);
+Path(145, -258, 12, 2, None);
+Path(150, -253, 2, 2, None);
+Path(150, -264, 2, 2, None);
+Hurdle(210, -370, 2, 6, None);
+Hurdle(227, -370, 2, 5, None);
+Hurdle(233, -369, 3, 6, None);
+Hurdle(209, -356, 3, 7, None);
+Hurdle(216, -355, 3, 6, None);
+Hurdle(228, -356, 3, 7, None);
+Hurdle(234, -353, 7, 3, None);
+Hurdle(358, -339, 16, 2, None);
+Hurdle(358, -337, 3, 28, None);
+Hurdle(361, -312, 13, 3, None);
+Hurdle(374, -312, 0, 0, None);
+Hurdle(371, -323, 3, 11, None);
+Hurdle(364, -323, 7, 2, None);
+Hurdle(380, -339, 17, 1, None);
+Hurdle(380, -338, 3, 29, None);
+Hurdle(383, -312, 15, 3, None);
+Hurdle(396, -324, 2, 12, None);
+Hurdle(387, -324, 8, 2, None);
+Wall(-10, 7, 20, 3, None);
+Void(-10, -75, 20, 45, None);
+Void(-10, -140, 19, 45, None);
+Wall(-14, -159, 3, 169, None);
+Wall(11, -140, 3, 150, None);
+Wall(-14, -162, 34, 3, None);
+Wall(15, -140, 35, 3, None);
+Void(25, -204, 20, 43, None);
+Void(26, -270, 19, 45, None);
+Wall(50, -270, 4, 133, None);
+Wall(17, -290, 3, 128, None);
+Void(70, -290, 45, 20, None);
+Void(135, -290, 45, 20, None);
+Wall(55, -270, 155, 4, None);
+Wall(17, -294, 163, 4, None);
+Wall(210, -310, 4, 44, None);
+Wall(176, -340, 4, 45, None);
+Void(210, -334, 45, 19, None);
+Void(275, -334, 45, 19, None);
+Wall(215, -310, 127, 3, None);
+Wall(176, -343, 166, 3, None);
+Wall(-46, 17, 3, 18, None);
+Wall(-43, 17, 7, 2, None);
+Wall(-36, 17, 3, 8, None);
+Wall(-43, 25, 10, 2, None);
+Wall(-40, 27, 3, 8, None);
+Wall(-29, 17, 4, 17, None);
+Wall(-25, 17, 9, 3, None);
+Wall(-20, 20, 4, 14, None);
+Wall(-24, 26, 3, 2, None);
+Wall(-12, 17, 3, 17, None);
+Wall(-9, 17, 8, 3, None);
+Wall(-9, 25, 4, 3, None);
+Wall(2, 17, 3, 16, None);
+Wall(5, 17, 9, 3, None);
+Wall(11, 20, 3, 13, None);
+Wall(5, 26, 6, 1, None);
+Wall(19, 27, 3, 5, None);
+Wall(22, 24, 2, 3, None);
+Wall(24, 17, 3, 7, None);
+Wall(19, 17, 3, 7, None);
+Wall(24, 27, 3, 5, None);
+Wall(32, 17, 3, 7, None);
+Wall(35, 17, 7, 2, None);
+Wall(39, 19, 3, 5, None);
+Wall(32, 24, 10, 2, None);
+Wall(40, 26, 2, 7, None);
+Wall(33, 30, 7, 3, None);
+Eraser(-35, -70, 3, 3, None);
+Eraser(-26, -69, 4, 2, None);
+Eraser(-36, -61, 14, 9, None);
+Hurdle(25, -116, 3, 3, None);
+Hurdle(25, -110, 3, 3, None);
+Hurdle(32, -107, 5, 2, None);
+Hurdle(37, -117, 2, 10, None);
+Hurdle(32, -119, 5, 2, None);
+Hurdle(33, -112, 4, 1, None);
+Eraser(1, -252, 6, 2, None);
+Eraser(-9, -252, 6, 2, None);
+Eraser(-9, -246, 16, 0, None);
+Path(87, -258, 15, 3, None);
+Path(92, -264, 5, 14, None);
+Path(92, -264, 5, 14, None);
+Path(111, -258, 12, 3, None);
+Path(134, -259, 3, 3, None);
+Path(145, -258, 12, 2, None);
+Path(150, -253, 2, 2, None);
+Path(150, -264, 2, 2, None);
+Hurdle(210, -370, 2, 6, None);
+Hurdle(227, -370, 2, 5, None);
+Hurdle(233, -369, 3, 6, None);
+Hurdle(209, -356, 3, 7, None);
+Hurdle(216, -355, 3, 6, None);
+Hurdle(228, -356, 3, 7, None);
+Hurdle(234, -353, 7, 3, None);
+Hurdle(358, -339, 16, 2, None);
+Hurdle(358, -337, 3, 28, None);
+Hurdle(361, -312, 13, 3, None);
+Hurdle(374, -312, 0, 0, None);
+Hurdle(371, -323, 3, 11, None);
+Hurdle(364, -323, 7, 2, None);
+Hurdle(380, -339, 17, 1, None);
+Hurdle(380, -338, 3, 29, None);
+Hurdle(383, -312, 15, 3, None);
+Hurdle(396, -324, 2, 12, None);
+Hurdle(387, -324, 8, 2, None);
+Wall(-10, 7, 20, 3, None);
+Void(-10, -75, 20, 45, None);
+Void(-10, -140, 19, 45, None);
+Wall(-14, -159, 3, 169, None);
+Wall(11, -140, 3, 150, None);
+Wall(-14, -162, 34, 3, None);
+Wall(15, -140, 35, 3, None);
+Void(25, -204, 20, 43, None);
+Void(26, -270, 19, 45, None);
+Wall(50, -270, 4, 133, None);
+Wall(17, -290, 3, 128, None);
+Void(70, -290, 45, 20, None);
+Void(135, -290, 45, 20, None);
+Wall(55, -270, 155, 4, None);
+Wall(17, -294, 163, 4, None);
+Wall(210, -310, 4, 44, None);
+Wall(176, -340, 4, 45, None);
+Void(210, -334, 45, 19, None);
+Void(275, -334, 45, 19, None);
+Wall(215, -310, 127, 3, None);
+Wall(176, -343, 166, 3, None);
+Wall(-46, 17, 3, 18, None);
+Wall(-43, 17, 7, 2, None);
+Wall(-36, 17, 3, 8, None);
+Wall(-43, 25, 10, 2, None);
+Wall(-40, 27, 3, 8, None);
+Wall(-29, 17, 4, 17, None);
+Wall(-25, 17, 9, 3, None);
+Wall(-20, 20, 4, 14, None);
+Wall(-24, 26, 3, 2, None);
+Wall(-12, 17, 3, 17, None);
+Wall(-9, 17, 8, 3, None);
+Wall(-9, 25, 4, 3, None);
+Wall(2, 17, 3, 16, None);
+Wall(5, 17, 9, 3, None);
+Wall(11, 20, 3, 13, None);
+Wall(5, 26, 6, 1, None);
+Wall(19, 27, 3, 5, None);
+Wall(22, 24, 2, 3, None);
+Wall(24, 17, 3, 7, None);
+Wall(19, 17, 3, 7, None);
+Wall(24, 27, 3, 5, None);
+Wall(32, 17, 3, 7, None);
+Wall(35, 17, 7, 2, None);
+Wall(39, 19, 3, 5, None);
+Wall(32, 24, 10, 2, None);
+Wall(40, 26, 2, 7, None);
+Wall(33, 30, 7, 3, None);
+Eraser(-35, -70, 3, 3, None);
+Eraser(-26, -69, 4, 2, None);
+Eraser(-36, -61, 14, 9, None);
+Hurdle(25, -116, 3, 3, None);
+Hurdle(25, -110, 3, 3, None);
+Hurdle(32, -107, 5, 2, None);
+Hurdle(37, -117, 2, 10, None);
+Hurdle(32, -119, 5, 2, None);
+Hurdle(33, -112, 4, 1, None);
+Eraser(1, -252, 6, 2, None);
+Eraser(-9, -252, 6, 2, None);
+Eraser(-9, -246, 16, 0, None);
+Path(87, -258, 15, 3, None);
+Path(92, -264, 5, 14, None);
+Path(92, -264, 5, 14, None);
+Path(111, -258, 12, 3, None);
+Path(134, -259, 3, 3, None);
+Path(145, -258, 12, 2, None);
+Path(150, -253, 2, 2, None);
+Path(150, -264, 2, 2, None);
+Hurdle(210, -370, 2, 6, None);
+Hurdle(227, -370, 2, 5, None);
+Hurdle(233, -369, 3, 6, None);
+Hurdle(209, -356, 3, 7, None);
+Hurdle(216, -355, 3, 6, None);
+Hurdle(228, -356, 3, 7, None);
+Hurdle(234, -353, 7, 3, None);
+Hurdle(358, -339, 16, 2, None);
+Hurdle(358, -337, 3, 28, None);
+Hurdle(361, -312, 13, 3, None);
+Hurdle(374, -312, 0, 0, None);
+Hurdle(371, -323, 3, 11, None);
+Hurdle(364, -323, 7, 2, None);
+Hurdle(380, -339, 17, 1, None);
+Hurdle(380, -338, 3, 29, None);
+Hurdle(383, -312, 15, 3, None);
+Hurdle(396, -324, 2, 12, None);
+Hurdle(387, -324, 8, 2, None);
+Checkpoint(339, -331, "wasn't too hellish then?" , 14, 14, None);
+}};var canvas = document.getElementById('mycanvas'); canvas.width = +window.innerWidth; canvas.width = +window.innerHeight; var processingInstance = new Processing(canvas, programCode);</script></html>

@@ -1,14 +1,12 @@
 
-
-// Close this {
+frameRate(60);
 var hyper = false;
 var canDie = true;
 var noclip = false;
 var victory = false;
 var epeFileMode = true;
-var mouseIsPressed;
 var g = function(){};
-var gName = "Path";
+var gName = "Wall";
 var arrow_head_size = 700;
 var isOnMenu = false;
 var ctime = millis();
@@ -27,6 +25,12 @@ var inkeyp = false;
 var elasticPower = {x:0, y:0};
 var selectPos1 = {xpos:0, ypos:0};
 var selectPos2 = {xpos:0, ypos:0};
+var mouseCurrentlyPressed = false;
+var mouseIsPressed = false;
+var mouseWasPressed = false;
+var selectedBoxID = -1;
+var currentlyControllingBox = false;
+
 var COLOR = {
     WALL : color(100),
     STONE : color(100),
@@ -105,9 +109,9 @@ var COLOR = {
 // Chapter One Record: 2:14:500
 
 //{
-var keys = [], pkeys = [], pressed = false, released = false, mouseWasPressed = false;
+var keys = [], pkeys = [], pressed = false, released = false;
 
-var W = 87, A = 65, S = 83, D = 68, Q = 81, E = 69, Z = 90, X = 86, C = 67, R = 82, F = 70, V = 86, T = 84, Y = 89, U = 85, I = 73, O = 79, P = 80, G = 71, H = 72, J = 74, K = 75, L = 76, B = 66, M = 78, N = 77, SPACE = 32, OPEN_BRACKET = 219, CLOSED_BRACKET = 221;
+var W = 87, A = 65, S = 83, D = 68, Q = 81, E = 69, Z = 90, X = 88, C = 67, R = 82, F = 70, V = 86, T = 84, Y = 89, U = 85, I = 73, O = 79, P = 80, G = 71, H = 72, J = 74, K = 75, L = 76, B = 66, M = 78, N = 77, SPACE = 32, OPEN_BRACKET = 219, CLOSED_BRACKET = 221;
 
 for(var i = 0; i < 256; i++){
     keys.push(false);
@@ -123,10 +127,6 @@ function wasPressed(KEY){
 
 function wasReleased(KEY){
     return !keys[KEY] && pkeys[KEY];
-}
-
-function mousePressed(){
-    mouseIsPressed = true;
 }
 
 function YouNeedToRunThisEachFrameItMakesTheInputWork(){
@@ -147,6 +147,26 @@ function YouNeedToRunThisEachFrameItMakesTheInputWork(){
     mouseWasPressed = mouseIsPressed;
 }
 
+mouseClicked = function(){
+    mouseIsPressed = true;
+};
+
+function createBox(){
+    if(!epeFileMode){
+        println(gName + "(" + (x1-width)/5 + "," + (y1-height)/5 + "," + (x2-x1)/5 + "," + (y2-y1)/5 + ");");
+        if(debugMode){
+            g((x1-width)/5, (y1-height)/5, (x2-x1)/5, (y2-y1)/5);
+        }
+    }
+    else{
+        if(debugMode){
+            g((x1-width)/5, (y1-height)/5, (x2-x1)/5, (y2-y1)/5);
+            final_script.push({name:gName.toUpperCase(), box:boxes[boxes.length - 1]});
+        }
+    }
+
+}
+
 var x1,x2,y1,y2;
 keyPressed = function(){
     keys[keyCode] = true;
@@ -160,19 +180,32 @@ keyReleased = function(){
         println("(" + (x1-width)/5 + "," + (y1-height)/5 + "," + (x2-x1)/5 + "," + (y2-y1)/5 + ")" + (epeFileMode ? "" : ";"));
     }
     else if(keyCode === ALT){
-        if(!epeFileMode){
-            println(gName + "(" + (x1-width)/5 + "," + (y1-height)/5 + "," + (x2-x1)/5 + "," + (y2-y1)/5 + ");");
-            if(debugMode){
-                g((x1-width)/5, (y1-height)/5, (x2-x1)/5, (y2-y1)/5);
+        createBox();
+    }
+
+    // if "i" is pressed, get the recent most platform the mouse is over
+    var boxFound = false;
+    if(keyCode === 73){
+        for(var i = boxes.length - 1; i >= 0; i--){
+            b = boxes[i];
+            // Calculate mouse position in world coordinates
+            var mouseWorldX = player.xpos + (mouseX - width / 2);
+            var mouseWorldY = player.ypos + (mouseY - height / 2);
+            var mouseIsOverBox = b.xpos < mouseWorldX && mouseWorldX < b.xpos + b.width &&
+                                 b.ypos < mouseWorldY && mouseWorldY < b.ypos + b.height;
+            if(mouseIsOverBox){
+                selectedBoxID = i;
+                boxFound = true;
+                break;
             }
         }
-        else{
-            println(gName.toUpperCase() + " (" + (x1-width)/5 + " " + (y1-height)/5 + " " + (x2-x1)/5 + " " + (y2-y1)/5 + ")");
-            if(debugMode){
-                g((x1-width)/5, (y1-height)/5, (x2-x1)/5, (y2-y1)/5);
-            }
+
+        if(!boxFound){
+            selectedBoxID = -1;
+            currentlyControllingBox = false;
         }
     }
+    
 };
 //} Evan\'s Toolkit
 //{
@@ -193,7 +226,7 @@ var millistart = millis();
 var player = {xpos:player_starting_x_position, ypos:player_starting_y_position, zpos:0, vel:0, alive:true, respawnTimer:timeToRespawn, spawnX:  player_starting_x_position, spawnY:  player_starting_y_position, spawnID: -1};
 var oldplayer = {xpos:0, ypos:0};
 var justLanded = 0;
-var buffer = -2;
+var buffer = -5;
 var deaths = 0;
 var index;
 var dx = 0, dy = 0, dz = 0, colli;
@@ -201,7 +234,7 @@ var b; var newColor;
 //} Variable Declaration
 
 //{
-var notiTime = 3000; var notiText = "WASD to move, space to jump.";
+var notiTime = 3000; var notiText = "Hi there!";
 function setNotification(noti){
     notiText = noti;
     notiTime = 1000;
@@ -498,6 +531,14 @@ function ForcedConveyor(x,y,w,h,xspd,yspd,c){
     boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w ? w*5 : 50, height:h ? h*5 : 50, color:c ? c : COLOR.SULFUR, coll:false, kills:false, isConveyor:true, xConv:xspd, yConv:yspd});
 }
 
+function Template(x,y,w,h){
+    x = round(x);
+    y = round(y);
+    w = round(w);
+    h = round(h);
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w ? w*5 : 50, height:h ? h*5 : 50, color:COLOR.FAINT, coll:false, kills:false});
+}
+
 function MovingBox(x,y,w,h,col,coll,jumpable,deadly,message,isACheckpoint,moveSpeed,moveDistance,moveVert,slows,ice,boosts,boost){
     x = round(x);
     y = round(y);
@@ -762,6 +803,7 @@ function TextTrigger(x,y,m,w,h){
 function Floor(x,y,w,h,c){
     floors.push({xpos:x*5, ypos:y*5, width:w*5, height:h*5, color:c ? c : COLOR.SILVER});
 }
+
 function Fog(){
     
 }
@@ -773,6 +815,7 @@ function Fog(){
 
 
 //{
+
 var flickerLifetime, progress;
 function flickerCurrentlyExists(boxToCheck){
     flickerLifetime = boxToCheck.existingTime + boxToCheck.missingTime;
@@ -780,7 +823,10 @@ function flickerCurrentlyExists(boxToCheck){
     
     return progress < boxToCheck.existingTime;
 }
-var xmove = 0, ymove = 0, zmove, iters, pdz, foo, move, xOffset, yOffset, shrinkage; var cx1, cy1, cx2, cy2;
+
+var xmove, ymove, zmove, iters, pdz, foo, move, xOffset, yOffset, shrinkage; var cx1, cy1, cx2, cy2;
+xmove = 0;
+ymove = 0;
 function drawBox(i){
     b = boxes[i];
     if((b.xpos < player.xpos + width/2 && b.xpos + b.width > player.xpos - width/2 && b.ypos < player.ypos + height/2 && b.ypos + b.height > player.ypos - height/2) || freecamMode){ // If box is close enough to matter
@@ -803,6 +849,10 @@ function drawBox(i){
             fill(COLOR.FAINT);
             stroke(COLOR.FAINT);
             strokeWeight(5);
+        }
+
+        if(i === selectedBoxID){
+            stroke(round(millis()%500/500)*255, 0, 0);
         }
         
         rect(b.xpos - player.xpos + width/2, b.ypos - player.ypos + height/2, b.width, b.height,5);
@@ -857,6 +907,7 @@ function drawFloor(i){
     noStroke();
     rect(f.xpos - player.xpos + width/2, f.ypos - player.ypos + height/2, f.width, f.height);
 }
+
 var playerInside = false;
 function checkCollision(i){
     b = boxes[i];
@@ -866,6 +917,7 @@ function checkCollision(i){
     
     return playerInside && !b.vanished && (!b.flickers || flickerCurrentlyExists(b));
 }
+
 function checkCollisions(){
     if(freecamMode){
         return {};
@@ -896,6 +948,7 @@ function checkCollisions(){
     }
     return {collided:false, killed:false, checkpoint:false};
 }
+
 /*
 Here I would like to define two term.
 Pre-ironing collision and post-ironing collision.
@@ -944,8 +997,8 @@ function relock(keycode){
 var camX = width/2, camY = height/2;
 function drawPlayer(){
     strokeWeight(5);
-    fill(255*(canDie && !noclip), 255*(noclip), 255*(!canDie && !noclip), pow((255 - player.zpos)/255,1.5)*255);
-    stroke(168*(canDie && !noclip), 168*(noclip), 168*(!canDie && !noclip), pow((255 - player.zpos)/255,1.5)*255);
+    fill(255*(canDie && !noclip), 255*(noclip), 255*(!canDie && !noclip), pow((255 - player.zpos)/255,1.5)*255 - 128*(freecamMode));
+    stroke(168*(canDie && !noclip), 168*(noclip), 168*(!canDie && !noclip), pow((255 - player.zpos)/255,1.5)*255 - 128*(freecamMode));
     strokeWeight((5 + justLanded*5)*player.respawnTimer/timeToRespawn);
     if(!freecamMode){
         camX = lerp(camX, width/2 + xmove, 0.2);
@@ -954,6 +1007,7 @@ function drawPlayer(){
     }
     else{
         ellipse(camX - player.xpos, camY - player.ypos, (pS + player.zpos)*player.respawnTimer/timeToRespawn, (pS + player.zpos)*player.respawnTimer/timeToRespawn);
+        ellipse(width/2, height/2, (pS + player.zpos)*player.respawnTimer/timeToRespawn, (pS + player.zpos)*player.respawnTimer/timeToRespawn);
     }
     
     justLanded -= 1;
@@ -1136,24 +1190,59 @@ function keyboardControl(){
         
     }
     
-    if((isDown(SHIFT) || isDown(SPACE)) && player.zpos < 1){
-        dz = 3;
+    if(!currentlyControllingBox){
+        if((isDown(SHIFT) || isDown(SPACE)) && player.zpos < 1){
+            dz = 3;
+        }
+        if(isDown(LEFT) || isDown(A)){
+            dx += -1 * (hyper ? 5 : 1);}
+        if(isDown(RIGHT) || isDown(D)){
+            dx += 1 * (hyper ? 5 : 1);}
+        if(isDown(UP) || isDown(W)){
+            dy += -1 * (hyper ? 5 : 1);}
+        if(isDown(DOWN) || isDown(S)){
+            dy += 1 * (hyper ? 5 : 1);}
+        if(isDown(K)){
+            killPlayer();}
+        if(isDown(OPEN_BRACKET) || isDown(O) || isDown(Z)){
+            selectPos1 = mousePosToRealPos();
+        }
+        if(isDown(CLOSED_BRACKET) || isDown(P) || isDown(X)){
+            selectPos2 = mousePosToRealPos();
+        }
     }
-    if(isDown(LEFT) || isDown(A)){
-        dx += -1 * (hyper ? 5 : 1);}
-    if(isDown(RIGHT) || isDown(D)){
-        dx += 1 * (hyper ? 5 : 1);}
-    if(isDown(UP) || isDown(W)){
-        dy += -1 * (hyper ? 5 : 1);}
-    if(isDown(DOWN) || isDown(S)){
-        dy += 1 * (hyper ? 5 : 1);}
-    if(isDown(K)){
-        killPlayer();}
-    if(isDown(OPEN_BRACKET)){
-        selectPos1 = mousePosToRealPos();
-    }
-    if(isDown(CLOSED_BRACKET)){
-        selectPos2 = mousePosToRealPos();
+    else{
+        // Keyboard movement
+        if(wasReleased(LEFT)){
+            boxes[selectedBoxID].xpos -= 5;
+        }
+        if(wasReleased(RIGHT)){
+            boxes[selectedBoxID].xpos += 5;
+        }
+        if(wasReleased(UP)){
+            boxes[selectedBoxID].ypos -= 5;
+        }
+        if(wasReleased(DOWN)){
+            boxes[selectedBoxID].ypos += 5;
+        }
+        if(wasReleased(W)){
+            boxes[selectedBoxID].height -= 5;
+        }
+        if(wasReleased(S)){
+            boxes[selectedBoxID].height += 5;
+        }
+        if(wasReleased(A)){
+            boxes[selectedBoxID].width -= 5;
+        }
+        if(wasReleased(D)){
+            boxes[selectedBoxID].width += 5;
+        }
+        
+        // Mouse control too! (rounding to the nearest 5) when 
+        if(mouseIsPressed && mouseButton === RIGHT){
+            boxes[selectedBoxID].xpos = round((mouseX + player.xpos - width/2)/5)*5;
+            boxes[selectedBoxID].ypos = round((mouseY + player.ypos - height/2)/5)*5;
+        }
     }
 }
 var colli;
@@ -1358,6 +1447,27 @@ function fixNegMovingBoxes(){
     }
 }
 
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      println("Code copied to clipboard!");
+    }).catch(err => {
+      println("Error copying code\n\n\n");
+      println(text);
+    });
+}
+
+function compileFinalScriptLine(i){
+    return final_script[i].name + "(" + final_script[i].box.xpos/5 + " " + final_script[i].box.ypos/5 + " " + final_script[i].box.width/5 + " " + final_script[i].box.height/5 + ")";
+}
+
+function compileFinalScript(){
+    var script = "";
+    for(var i = 0; i < final_script.length; i++){
+        script += compileFinalScriptLine(i) + "\n";
+    }
+    return script;
+}
+
 //{
 // Button class {
 var Button = function(xpos,ypos,wdt,hgt,txt,tsz,col,stk,thk,cnr,aln,txtcol){
@@ -1376,9 +1486,16 @@ var Button = function(xpos,ypos,wdt,hgt,txt,tsz,col,stk,thk,cnr,aln,txtcol){
 };
 Button.prototype.draw = function() {
     fill(this.color);
+    if(this.text === gName){
+        fill(lerpColor(this.color, color(72), 0.5));
+    }
     stroke(this.stroke);
     strokeWeight(this.thickness);
     rect(this.xpos*(1 + this.align*0.5), this.ypos*(1 + this.align*0.5), this.width, this.height, this.roundness);
+    if(this.isOver()){
+        fill(0, 0, 0, 32);
+        rect(this.xpos*(1 + this.align*0.5), this.ypos*(1 + this.align*0.5), this.width, this.height, this.roundness);
+    }
     fill(this.textcolor);
     textAlign(CENTER,CENTER);
     textSize(this.textsize);
@@ -1399,20 +1516,29 @@ Button.prototype.isReleased = function() {
 };
 //}
 
-var freecamButton = new Button(5, 35, 50, 20, "Free-Cam", 10);
-var killButton = new Button(5, 5, 50, 20, "Kill", 10);
-var immortalButton = new Button(5, 65, 50, 20, "Immortal", 10);
-var mortalButton = new Button(5, 95, 50, 20, "Mortal", 10);
-var noclipButton = new Button(5, 125, 50, 20, "No Clip", 10);
-var hyperButton = new Button(5, 155, 50, 20, "Hyper", 10);
+var freecamButton = new Button(5, 35, 50, 20, "Freecam", 10);
+var killButton = new Button(5, 5, 50, 20, "Kill", 12);
+var immortalButton = new Button(5, 65, 50, 20, "Immortal", 11);
+var mortalButton = new Button(5, 95, 50, 20, "Mortal", 12);
+var noclipButton = new Button(5, 125, 50, 20, "No Clip", 12);
+var hyperButton = new Button(5, 155, 50, 20, "Hyper", 12);
+var teleportButton = new Button(5, 185, 50, 20, "Put player", 10);
 var debugMenuButton = new Button(5, height-25, 50, 20, "Debug", 10);
-var gWallSwitch = new Button(70, 5, 50, 20, "Wall", 10);
-var gPathSwitch = new Button(70, 35, 50, 20, "Platform", 10);
-var gEraserSwitch = new Button(70, 65, 50, 20, "Eraser", 10);
-var gVoidSwitch = new Button(70, 95, 50, 20, "Void", 10);
-var gHurdleSwitch = new Button(70, 125, 50, 20, "Hurdle", 10);
+var gWallSwitch = new Button(70, 5, 50, 20, "Wall", 12);
+var gPlatformSwitch = new Button(70, 35, 50, 20, "Platform", 12);
+var gPathSwitch = new Button(70, 65, 50, 20, "Path", 12);
+var gEraserSwitch = new Button(70, 95, 50, 20, "Eraser", 12);
+var gVoidSwitch = new Button(70, 125, 50, 20, "Void", 12);
+var gHurdleSwitch = new Button(70, 155, 50, 20, "Hurdle", 12);
+var gPlaceholderSwitch = new Button(135, 5, 50, 20, "Template", 12);
+var boxCreationButton = new Button(135, 35, 50, 20, "Put Box", 12);
+var compileButton = new Button(135, 65, 50, 50, "Copy\nCode", 16);
+var deleteLastButton = new Button(200, 5, 50, 25, "Delete\nPrevious", 10);
+var undoLastDeleteButton = new Button(200, 40, 50, 25, "Undo\nDelete", 10);
+var deleteSelectedButton = new Button(200, 75, 50, 25, "Delete\nSelected", 10);
+var controlSelectedButton = new Button(200, 110, 50, 25, "Control\nSelected", 10);
 g = Path;
-var age = 0; var citers = 0;
+var age = 0; var citers = 0; var previousDeletes = []; var previousDeletedLines = [];
 draw = function() {
     if(victory){
         background(240);
@@ -1443,7 +1569,6 @@ draw = function() {
     else{
         ctime = millis();
         background(255);
-
         fill(0,0,0,5);
         noStroke();
         for(var i = -2; i < ceil(width/50 + 1); i+=2){
@@ -1498,6 +1623,7 @@ draw = function() {
             freecamButton.draw();
             gWallSwitch.draw();
             gPathSwitch.draw();
+            gPlatformSwitch.draw();
             gEraserSwitch.draw();
             gVoidSwitch.draw();
             gHurdleSwitch.draw();
@@ -1505,6 +1631,15 @@ draw = function() {
             immortalButton.draw();
             noclipButton.draw();
             hyperButton.draw();
+            compileButton.draw();
+            teleportButton.draw();
+            gPlaceholderSwitch.draw();
+            deleteLastButton.draw();
+            undoLastDeleteButton.draw();
+            deleteSelectedButton.draw();
+            controlSelectedButton.draw();
+            boxCreationButton.draw();
+
             if(killButton.isReleased()){
                 killPlayer();
             }
@@ -1513,6 +1648,8 @@ draw = function() {
                     freecamMode = false;
                     player.xpos = camX - width/2;
                     player.ypos = camY - height/2;
+                    camX = width/2;
+                    camY = height/2;
                     xmove = 0;
                     ymove = 0;
                     dx = 0;
@@ -1528,23 +1665,38 @@ draw = function() {
             }
             else if(gWallSwitch.isReleased()){
                 gName = "Wall";
+                println("// Object type switched to: " + gName);
                 g = Wall;
             }
             else if(gVoidSwitch.isReleased()){
                 gName = "Void";
+                println("// Object type switched to: " + gName);
                 g = Void;
             }
             else if(gHurdleSwitch.isReleased()){
                 gName = "Hurdle";
+                println("// Object type switched to: " + gName);
                 g = Hurdle;
             }
             else if(gEraserSwitch.isReleased()){
                 gName = "Eraser";
+                println("// Object type switched to: " + gName);
                 g = Eraser;
+            }
+            else if(gPlatformSwitch.isReleased()){
+                gName = "Platform";
+                println("// Object type switched to: " + gName);
+                g = Platform;
             }
             else if(gPathSwitch.isReleased()){
                 gName = "Path";
+                println("// Object type switched to: " + gName);
                 g = Path;
+            }
+            else if(gPlaceholderSwitch.isReleased()){
+                gName = "{change this}";
+                println("// Object type switched to: PLACEHOLDER");
+                g = Template;
             }
             else if(mortalButton.isReleased()){
                 canDie = true;
@@ -1558,6 +1710,78 @@ draw = function() {
             else if(hyperButton.isReleased()){
                 hyper = !hyper;
             }
+            else if(compileButton.isReleased()){
+                copyToClipboard(compileFinalScript());
+            }
+            else if(teleportButton.isReleased()){
+                if(freecamMode){
+                    freecamMode = false;
+                    xmove = 0;
+                    ymove = 0;
+                    dx = 0;
+                    dy = 0;
+                    speed = 1.1;
+                    camX = width/2;
+                    camY = height/2;
+                }
+            }
+            else if(deleteLastButton.isReleased()){
+                // put the selection corners to the box being deleted
+                if (boxes.length > 0) {
+                    selectPos1.xpos = boxes[boxes.length - 1].xpos;
+                    selectPos1.ypos = boxes[boxes.length - 1].ypos;
+                    selectPos2.xpos = boxes[boxes.length - 1].xpos + boxes[boxes.length - 1].width/5;
+                    selectPos2.ypos = boxes[boxes.length - 1].ypos + boxes[boxes.length - 1].height/5;
+                }
+                
+                // Removing the last box from the array and putting it in a variable to undo it later
+                if(boxes.length > 0){
+                    previousDeletes.push(boxes.pop());
+                    previousDeletedLines.push(final_script.pop());
+                }
+            }
+            else if(undoLastDeleteButton.isReleased()){
+                if(previousDeletes.length > 0){
+                    boxes.push(previousDeletes.pop());
+                    final_script.push(previousDeletedLines.pop());
+                }
+            }
+            else if(deleteSelectedButton.isReleased()){
+                // put the selection corners to the box being deleted
+                if (boxes.length > 0 && selectedBoxID >= 0) {
+                    selectPos1.xpos = boxes[selectBox].xpos;
+                    selectPos1.ypos = boxes[selectBox].ypos;
+                    selectPos2.xpos = boxes[selectBox].xpos + boxes[selectBox].width/5;
+                    selectPos2.ypos = boxes[selectBox].ypos + boxes[selectBox].height/5;
+                }
+                
+                // Removing the selected box from the array and putting it in a variable to undo it later
+                if(boxes.length > 0 && selectedBoxID >= 0){
+                    previousDeletes.push(boxes.splice(selectBox, 1)[0]);
+                    previousDeletedLines.push(final_script.splice(selectBox, 1)[0]);
+                    selectedBoxID = -1;
+                    currentlyControllingBox = false;
+                }
+            }
+
+            else if(controlSelectedButton.isReleased()){
+                // put the selection corners to the box being controlled
+
+                if(boxes.length > 0 && selectedBoxID >= 0){
+                    if(!currentlyControllingBox){
+                        println("WASD to change size of the box.");
+                        println("Arrow keys to move the box.");
+                        println("Right click to move the box with the mouse.");
+                        println("Click button again to stop controlling");
+                        println("Press i to control a new box.");
+                    }
+                    currentlyControllingBox = !currentlyControllingBox;
+                }
+            }
+
+            else if(boxCreationButton.isReleased()){
+                createBox();
+            }
         }
         if(debugMode){
             debugMenuButton.draw();
@@ -1567,11 +1791,12 @@ draw = function() {
         }
         YouNeedToRunThisEachFrameItMakesTheInputWork();
     }
+
+    mouseIsPressed = false;
 };
 //}
 //}
 function mouseReleased(){
-    mouseIsPressed = false;
     if(mouseButton === RIGHT){
         showText = !showText;
     }
@@ -1680,22 +1905,3 @@ function ToJumpable(){
     b = boxes[boxes.length - 1];
     b.canBeJumped = true;
 }
-
-function Room(func,x,y,w,h,t,b,c){
-    t = t ? t : 5;
-    b = b ? b : 0;
-    
-    // Top and left wall
-    func(x,y,w,t);
-    func(x,y,t,h);
-    func(x,y + h - t,w, t);
-    func(x + w - t,y,t,h);
-    
-    // Corners
-    func(x-b,y-b,t+2*b,t+2*b);
-    func(x-b + w - t,y-b,t+2*b,t+2*b);
-    func(x-b,y-b + h - t,t+2*b,t+2*b);
-    func(x-b + w - t,y-b + h - t,t+2*b,t+2*b);
-}
-
-//}

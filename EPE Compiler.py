@@ -34,13 +34,20 @@ def readEPE(file_name:str) -> list[str]:
 
     return lines
 
-"""EPE File Format:
+"""
+EPE File Syntax:
 
+GAME_RULE_1_NAME = VALUE_1
+GAME_RULE_2_NAME = VALUE_2
+GAME_RULE_N_NAME = VALUE_N
+
+<START>
 OBJECT (X_POSITION, Y_POSITION, WIDTH, HEIGHT)
 COLOR (RED, GREEN, BLUE, OPACITY)
 MOVING (HORIZONTAL_DISTANCE, VERTICAL_DISTANCE, SPEED)
 BLINKING (EXIST_TIME, MISSING_TIME)
 COLLAPSING (TIME_TO_COLLAPSE)
+<END>
 
 """
 
@@ -49,7 +56,13 @@ yoffset = 0
 def parseEPEline(line: str) -> dict:
     global xoffset, yoffset
     
-    line = line.upper()
+    # make any text outside quotes uppercase
+    dividedLine = re.split(r'("[^"]*")', line)
+    for i in range(len(dividedLine)):
+        if i % 2 == 0:
+            dividedLine[i] = dividedLine[i].upper()
+    line = ''.join(dividedLine)
+
     if line.startswith("FORCED "):
         line = line.replace("FORCED ", "FORCED")
     elif line.startswith("ACTIVE "):
