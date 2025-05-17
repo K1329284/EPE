@@ -145,7 +145,7 @@ Syntax
   BOOSTER {STRENGTH} // Strength is a number
   PAD, ACCELERATES YOU, FORCED?
 
-  CONVEYOR {FORCE} // Formatted as a positional value according to the above rule.
+  CONVEYOR {FORCE} // Formatted as a positional value "x,y" according to the above rule.
   PAD, PUSHES YOU, FORCED?
 
   TELEPORTER-TO {POSITION} // Format position according to the above rule.
@@ -205,12 +205,15 @@ What else?
   I hope you enjoy using the EPE. It represents months of work completed between classes by its creator, Evan.
 
 Obviously, there is also a built in editor called "EPE Editor.html" included in this folder. Here is how to use it:
-  Using the '[' and ']' keys allows you to control the size of a rectangle called the "creator".
+  Using the '[' and ']' keys allows you to control the size of a rectangle called the "creator" (you can also use "p" and "o" or even "z" and "x").
   Pressing the 'debug' button in the bottom left allows for a variety of controls.
 
   'free-cam' -> allows to look around and edit without moving the player.
   'put player' -> puts the player at the location of the free-cam position.
-  'get code' -> prints the .epe formatted code with spots to edit things that are advanced. (anything with a special value)
+  'copy code' -> copies the .epe formatted code into your clipboard (if it can't, it will be printed) with spots to edit things that are advanced. (anything with a special value) 
+  'control selected' -> prints a usage guide and disables player movement.
+
+  Pressing 'i' allows you to select the shape being hovered over with the mouse. A guide on scaling, moving, and deletion is printed when pressing 'control selected'.
   
   The rest make sense based off their names or you can test them out :3
   It's intended to be used to make single areas, exported, then using OFFSET(X,Y) to place it where needed.
