@@ -30,7 +30,14 @@ def readEPE(file_name:str) -> list[str]:
         # Strip whitespace from the line and check if it's not empty
         if line.strip():
             # Add the line to the compiled lines list
-            lines.append(line.strip())
+            if ";" in line:
+                # If the line contains a semicolon, split it and add each part to the list
+                parts = line.split(";")
+                for part in parts:
+                    if part.strip():
+                        lines.append(part.strip() + ";")
+            else:
+                lines.append(line.strip())
 
     return lines
 
@@ -55,7 +62,7 @@ xoffset = 0
 yoffset = 0
 def parseEPEline(line: str) -> dict:
     global xoffset, yoffset
-    
+
     # make any text outside quotes uppercase
     dividedLine = re.split(r'("[^"]*")', line)
     for i in range(len(dividedLine)):

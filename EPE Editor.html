@@ -50,7 +50,7 @@ var noclip = false;
 var victory = false;
 var epeFileMode = true;
 var g = function(){};
-var gName = "Wall";
+var gName = "Path";
 var arrow_head_size = 700;
 var isOnMenu = false;
 var ctime = millis();
@@ -193,6 +193,15 @@ function YouNeedToRunThisEachFrameItMakesTheInputWork(){
 
 mouseClicked = function(){
     mouseIsPressed = true;
+
+    if(mouseButton === RIGHT){
+        showText = !showText;
+    }
+
+    // Ensuring it doesn't get flagged as malware by having it outside of the draw function's loop
+    if(compileButton.isOver()){
+        copyToClipboard(compileFinalScript());
+    }
 };
 
 function createBox(){
@@ -205,7 +214,7 @@ function createBox(){
     else{
         if(debugMode){
             g((x1-width)/5, (y1-height)/5, (x2-x1)/5, (y2-y1)/5);
-            final_script.push({name:gName.toUpperCase(), box:boxes[boxes.length - 1]});
+            final_script.push({name:gName.toUpperCase(), box:boxes[boxes.length - 1], marked: false});
         }
     }
 
@@ -583,251 +592,6 @@ function Template(x,y,w,h){
     boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w ? w*5 : 50, height:h ? h*5 : 50, color:COLOR.FAINT, coll:false, kills:false});
 }
 
-function MovingBox(x,y,w,h,col,coll,jumpable,deadly,message,isACheckpoint,moveSpeed,moveDistance,moveVert,slows,ice,boosts,boost){
-    x = round(x);
-    y = round(y);
-    w = round(w);
-    h = round(h);
-    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:jumpable, width:w*5, height:h*5, color:col, coll:coll, kills:deadly, isCheckpoint:isACheckpoint, message:message, moveSpeed:moveSpeed, moveDistance:moveDistance,slows:slows,hasTraveled:0,dir:1,doesMove:true,trueX:x*5,trueY:y*5,moveVert:moveVert,boosts:(boosts ? true : false),boostPower:(boost ? boost : 0.1),ice:ice});
-}
-
-//{
-
-function MovingWall(x,y,w,h,mT,mD,mV,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.WALL,
-    true/*collides*/,
-    false/*jumpable*/,
-    false/*kills*/,
-    undefined/*message*/,
-    false/*isCheckpoint*/,
-    mT,
-    mD,mV
-    );
-}
-function MovingPlatform(x,y,w,h,mT,mD,mV,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.WALL,
-    false/*collides*/,
-    false/*jumpable*/,
-    false/*kills*/,
-    undefined/*message*/,
-    false/*isCheckpoint*/,
-    mT,
-    mD,mV
-    );
-}
-function MovingPath(x,y,w,h,mT,mD,mV,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.WALL,
-    false/*collides*/,
-    true/*jumpable*/,
-    false/*kills*/,
-    undefined/*message*/,
-    false/*isCheckpoint*/,
-    mT,
-    mD,mV
-    );
-}
-function MovingHurdle(x,y,w,h,mT,mD,mV,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.WALL,
-    true/*collides*/,
-    true/*jumpable*/,
-    false/*kills*/,
-    undefined/*message*/,
-    false/*isCheckpoint*/,
-    mT,
-    mD,mV
-    );
-}
-function MovingEraser(x,y,w,h,mT,mD,mV,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.LAVA,
-    true/*collides*/,
-    false/*jumpable*/,
-    true/*kills*/,
-    undefined/*message*/,
-    false/*isCheckpoint*/,
-    mT,
-    mD,mV
-    );
-}
-function MovingHole(x,y,w,h,mT,mD,mV,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.HOLE,
-    true/*collides*/,
-    true/*jumpable*/,
-    true/*kills*/,
-    undefined/*message*/,
-    false/*isCheckpoint*/,
-    mT,
-    mD,mV
-    );
-}
-function MovingVoid(x,y,w,h,mT,mD,mV,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.VOID,
-    true/*collides*/,
-    true/*jumpable*/,
-    true/*kills*/,
-    undefined/*message*/,
-    false/*isCheckpoint*/,
-    mT,
-    mD,mV
-    );
-}
-function MovingCheckpoint(x,y,m,w,h,mT,mD,mV,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.CHECKPOINT,
-    false/*collides*/,
-    true/*jumpable*/,
-    false/*kills*/,
-    m/*message*/,
-    true/*isCheckpoint*/,
-    mT,
-    mD,mV
-    );
-}
-function MovingForcedCheckpoint(x,y,m,w,h,mT,mD,mV,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.CHECKPOINT,
-    false/*collides*/,
-    false/*jumpable*/,
-    false/*kills*/,
-    m/*message*/,
-    true/*isCheckpoint*/,
-    mT,
-    mD,mV
-    );
-}
-function MovingMud(x,y,w,h,mT,mD,mV,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.MUD,
-    false/*collides*/,
-    true/*jumpable*/,
-    false/*kills*/,
-    false/*message*/,
-    false/*isCheckpoint*/,
-    mT,
-    mD,mV,
-    true/*slows*/
-    );
-}
-function MovingForcedMud(x,y,w,h,mT,mD,mV,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.MUD,
-    false/*collides*/,
-    false/*jumpable*/,
-    false/*kills*/,
-    false/*message*/,
-    false/*isCheckpoint*/,
-    mT,
-    mD,mV,
-    true/*slows*/
-    );
-}
-function MovingIce(x,y,w,h,mT,mD,mV,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.ICE,
-    false/*collides*/,
-    true/*jumpable*/,
-    false/*kills*/,
-    false/*message*/,
-    false/*isCheckpoint*/,
-    mT,
-    mD,mV,
-    false,/*slows*/
-    true/*ice*/
-    );
-}
-function MovingForcedIce(x,y,w,h,mT,mD,mV,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.ICE,
-    false/*collides*/,
-    false/*jumpable*/,
-    false/*kills*/,
-    false/*message*/,
-    false/*isCheckpoint*/,
-    mT,
-    mD,mV,
-    false,/*slows*/
-    true/*ice*/
-    );
-}
-function MovingBooster(x,y,w,h,mT,mD,mV,bp,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.BOOSTER,
-    false/*collides*/,
-    true/*jumpable*/,
-    false/*kills*/,
-    false/*message*/,
-    false/*isCheckpoint*/,
-    mT,
-    mD,mV,
-    false,/*slows*/
-    false,/*ice*/
-    true,/*boosts*/
-    bp/*boost power in %*/
-    );
-}
-function MovingForcedBooster(x,y,w,h,mT,mD,mV,bp,c){
-    MovingBox(x,y,w,h,
-    c ? c : COLOR.BOOSTER,
-    false/*collides*/,
-    false/*jumpable*/,
-    false/*kills*/,
-    false/*message*/,
-    false/*isCheckpoint*/,
-    mT,
-    mD,mV,
-    false,/*slows*/
-    false,/*ice*/
-    true,/*boosts*/
-    bp/*boost power in %*/
-    );
-}
-function MovingTeleporterIn(x,y,tc,w,h,mT,mD,mV,c,i){
-    x = round(x);
-    y = round(y);
-    w = round(w);
-    h = round(h);
-    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:true, width:w ? w*5 : 50, height:h ? h*5 : 50, color:c ? c : COLOR.TELEPORTER, coll:false, kills:false, isCheckpoint:false, slows:false, tpc:tc, tpDir:"in", isInvisible:i ? i : false, moveSpeed:mT, moveDistance:mD,hasTraveled:0,dir:1,doesMove:true,trueX:x*5,trueY:y*5,moveVert:mV});
-}
-function MovingTeleporterOut(x,y,tc,w,h,mT,mD,mV,c,i){
-    x = round(x);
-    y = round(y);
-    w = round(w);
-    h = round(h);
-    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w ? w*5 : 50, height:h ? h*5 : 50, color:c ? c : COLOR.TELEPORTER, coll:false, kills:false, isCheckpoint:false, slows:false, tpc:tc, tpDir:"out", isInvisible:i ? i : false, moveSpeed:mT, moveDistance:mD,hasTraveled:0,dir:1,doesMove:true,trueX:x*5,trueY:y*5,moveVert:mV});
-}
-function MovingTeleporterOutA(x,y,tc,w,h,mT,mD,mV,c,i){
-    x = round(x);
-    y = round(y);
-    w = round(w);
-    h = round(h);
-    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w ? w*5 : 50, height:h ? h*5 : 50, color:c ? c : COLOR.TELEPORTER, coll:false, kills:false, isCheckpoint:false, slows:false, tpc:tc, tpDir:"out", isExact:true, isInvisible:i ? i : false, moveSpeed:mT, moveDistance:mD,hasTraveled:0,dir:1,doesMove:true,trueX:x*5,trueY:y*5,moveVert:mV});}
-function MovingTeleporterInForced(x,y,tc,w,h,mT,mD,mV,c,i){
-    x = round(x);
-    y = round(y);
-    w = round(w);
-    h = round(h);
-    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w ? w*5 : 50, height:h ? h*5 : 50, color:c ? c : COLOR.TELEPORTER, coll:false, kills:false, isCheckpoint:false, slows:false, tpc:tc, tpDir:"in", isInvisible:i ? i : false, moveSpeed:mT, moveDistance:mD,hasTraveled:0,dir:1,doesMove:true,trueX:x*5,trueY:y*5,moveVert:mV});
-}
-function MovingTrampoline(x,y,w,h,mT,mD,mV,jm,c){
-    x = round(x);
-    y = round(y);
-    w = round(w);
-    h = round(h);
-    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:true, width:w ? w*5 : 50, height:h ? h*5 : 50, color:c ? c : COLOR.TRAMPOLINE, coll:false, kills:false, slows:false, isTrampoline:true, jumpFactor:jm ? jm : 1, moveSpeed:mT, moveDistance:mD,hasTraveled:0,dir:1,doesMove:true,trueX:x*5,trueY:y*5,moveVert:mV});
-}
-function MovingKey(keycode,x,y,w,h,mT,mD,mV,c){
-    x = round(x);
-    y = round(y);
-    w = round(w);
-    h = round(h);
-    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w ? w*5 : 30, height:h ? h*5 : 30, color:c ? c : COLOR.GOLD, coll:false, kills:false, keycode:keycode, isKey:true, isLock:false, moveSpeed:mT, moveDistance:mD,hasTraveled:0,dir:1,doesMove:true,trueX:x*5,trueY:y*5,moveVert:mV});
-}
 function Win(x,y,w,h,c){
     x = round(x);
     y = round(y);
@@ -1491,17 +1255,8 @@ function fixNegMovingBoxes(){
     }
 }
 
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-      println("Code copied to clipboard!");
-    }).catch(err => {
-      println("Error copying code\n\n\n");
-      println(text);
-    });
-}
-
 function compileFinalScriptLine(i){
-    return final_script[i].name + "(" + final_script[i].box.xpos/5 + " " + final_script[i].box.ypos/5 + " " + final_script[i].box.width/5 + " " + final_script[i].box.height/5 + ")";
+    return final_script[i].name + "(" + final_script[i].box.xpos/5 + " " + final_script[i].box.ypos/5 + " " + final_script[i].box.width/5 + " " + final_script[i].box.height/5 + ")" + (final_script[i].box.marked ? " //marked" : "");
 }
 
 function compileFinalScript(){
@@ -1510,6 +1265,178 @@ function compileFinalScript(){
         script += compileFinalScriptLine(i) + "\n";
     }
     return script;
+}
+
+function typeFromObject(i){
+    var b = boxes[i];
+    
+    // Checkpoints
+    if(b.isCheckpoint){
+        if(b.canBeJumped){
+            return "Checkpoint";
+        }
+        else{
+            return "ForcedCheckpoint";
+        }
+    }
+
+    // Trampolines
+    if(b.isTrampoline){
+        return "Trampoline";
+    }
+
+    // Wormholes
+    if(b.wormholeCode){
+        if(b.canBeJumped){
+            return "Wormhole";
+        }
+        else{
+            return "ForcedWormhole";
+        }
+    }
+
+    // Teleporters To
+    if(b.isTT){
+        if(b.canBeJumped){
+            return "TeleportTo";
+        }
+        else{
+            return "ForcedTeleportTo";
+        }
+    }
+
+    // Normal Teleporters
+    if(b.tpc){
+        if(b.canBeJumped){
+            if(b.dir === "in"){
+                return "TeleportIn";
+            }
+            else{
+                if(b.isExact){
+                    return "TeleportOutA";
+                }
+                else{
+                    return "TeleportOut";
+                }
+            }
+        }
+        else{
+            if(b.dir === "in"){
+                return "ForcedTeleportIn";
+            }
+            else{
+                if(b.isExact){
+                    return "ForcedTeleportOutA";
+                }
+                else{
+                    return "ForcedTeleportOut";
+                }
+            }
+        }
+    }
+
+    // Conveyors
+    if(b.isConveyor){
+        if(b.canBeJumped){
+            return "Conveyor";
+        }
+        else{
+            return "ForcedConveyor";
+        }
+    }
+
+    // Ice
+    if(b.ice){
+        if(b.canBeJumped){
+            return "Ice";
+        }
+        else{
+            return "ForcedIce";
+        }
+    }
+
+    // Mud
+    if(b.slows){
+        if(b.canBeJumped){
+            return "Mud";
+        }
+        else{
+            return "ForcedMud";
+        }
+    }
+
+    // Boosters
+    if(b.boosts){
+        if(b.canBeJumped){
+            return "Booster";
+        }
+        else{
+            return "ForcedBooster";
+        }
+    }
+
+    // Keys
+    if(b.isKey){
+        if(b.prestarted){
+            return "ActiveKey";
+        }
+        else{
+            return "Key";
+        }
+    }
+
+    // Locks
+    if(b.isLock){
+        if(b.isLPlat){
+            return "LockedPlatform";
+        }
+        else{
+            if(b.kills){
+                return "LockedEraser";
+            }
+            else{
+                return "LockedWall";
+            }
+        }
+    }
+
+    // Elastic
+    if(b.isElastic){
+        return "ElasticWall";
+    }
+
+    // Regular Boxes
+    if(b.coll){
+        if(b.kills){
+            return "Eraser";
+        }
+        else{
+            if(b.canBeJumped){
+                return "Wall";
+            }
+            else{
+                return "Hurdle";
+            }
+        }
+    }
+    else{
+        if(b.kills){
+            if(b.color === COLOR.VOID){
+                return "Void";
+            }
+            else{
+                return "Hole";
+            }
+        }
+        else{
+            if(b.canBeJumped){
+                return "Path";
+            }
+            else{
+                return "Platform";
+            }
+        }
+    }
 }
 
 //{
@@ -1560,9 +1487,9 @@ Button.prototype.isReleased = function() {
 };
 //}
 
-var freecamButton = new Button(5, 35, 50, 20, "Freecam", 10);
-var killButton = new Button(5, 5, 50, 20, "Kill", 12);
-var immortalButton = new Button(5, 65, 50, 20, "Immortal", 11);
+var freecamButton = new Button(5, 35, 50, 20, "Freecam", 12);
+var killButton = new Button(5, 5, 50, 20, "Kill", 13);
+var immortalButton = new Button(5, 65, 50, 20, "Immortal", 12);
 var mortalButton = new Button(5, 95, 50, 20, "Mortal", 12);
 var noclipButton = new Button(5, 125, 50, 20, "No Clip", 12);
 var hyperButton = new Button(5, 155, 50, 20, "Hyper", 12);
@@ -1575,12 +1502,12 @@ var gEraserSwitch = new Button(70, 95, 50, 20, "Eraser", 12);
 var gVoidSwitch = new Button(70, 125, 50, 20, "Void", 12);
 var gHurdleSwitch = new Button(70, 155, 50, 20, "Hurdle", 12);
 var gPlaceholderSwitch = new Button(135, 5, 50, 20, "Template", 12);
-var boxCreationButton = new Button(135, 35, 50, 20, "Put Box", 12);
-var compileButton = new Button(135, 65, 50, 50, "Copy\nCode", 16);
+var boxCreationButton = new Button(135, 35, 50, 20, "Put Box", 13);
 var deleteLastButton = new Button(200, 5, 50, 25, "Delete\nPrevious", 10);
 var undoLastDeleteButton = new Button(200, 40, 50, 25, "Undo\nDelete", 10);
 var deleteSelectedButton = new Button(200, 75, 50, 25, "Delete\nSelected", 10);
 var controlSelectedButton = new Button(200, 110, 50, 25, "Control\nSelected", 10);
+var markSelectedButton = new Button(200, 145, 50, 25, "Mark\nSelected", 10);
 g = Path;
 var age = 0; var citers = 0; var previousDeletes = []; var previousDeletedLines = [];
 draw = function() {
@@ -1682,6 +1609,7 @@ draw = function() {
             undoLastDeleteButton.draw();
             deleteSelectedButton.draw();
             controlSelectedButton.draw();
+            markSelectedButton.draw();
             boxCreationButton.draw();
 
             if(killButton.isReleased()){
@@ -1754,9 +1682,6 @@ draw = function() {
             else if(hyperButton.isReleased()){
                 hyper = !hyper;
             }
-            else if(compileButton.isReleased()){
-                copyToClipboard(compileFinalScript());
-            }
             else if(teleportButton.isReleased()){
                 if(freecamMode){
                     freecamMode = false;
@@ -1823,6 +1748,12 @@ draw = function() {
                 }
             }
 
+            else if(markSelectedButton.isReleased()){
+                if(boxes.length > 0 && selectedBoxID >= 0){
+                    boxes[selectedBoxID].marked = true;
+                }
+            }
+
             else if(boxCreationButton.isReleased()){
                 createBox();
             }
@@ -1838,13 +1769,24 @@ draw = function() {
 
     mouseIsPressed = false;
 };
-//}
-//}
+
+var compileButton = new Button(135, 65, 50, 50, "Copy\nCode", 16);
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      println("Code copied to clipboard!");
+    }).catch(err => {
+      println("Error copying code\n\n\n");
+      println(text);
+    });
+}
+
 function mouseReleased(){
     if(mouseButton === RIGHT){
         showText = !showText;
     }
 }
+
 function setGamerule(rule, value){
     if(rule === "Floor Kills"){
         if(value){
@@ -1936,7 +1878,7 @@ function ActiveKey(keycode,x,y,w,h,c){
     y = round(y);
     w = round(w);
     h = round(h);
-    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w ? w*5 : 30, height:h ? h*5 : 30, color:c ? c : COLOR.GOLD, coll:false, kills:false, keycode:keycode, isKey:true, isLock:false});
+    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:false, width:w ? w*5 : 30, height:h ? h*5 : 30, color:c ? c : COLOR.GOLD, coll:false, kills:false, keycode:keycode, isKey:true, isLock:false, prestarted:true});
     ToActive();
 }
 

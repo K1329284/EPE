@@ -212,6 +212,7 @@ Obviously, there is also a built in editor called "EPE Editor.html" included in 
   'put player' -> puts the player at the location of the free-cam position.
   'copy code' -> copies the .epe formatted code into your clipboard (if it can't, it will be printed) with spots to edit things that are advanced. (anything with a special value) 
   'control selected' -> prints a usage guide and disables player movement.
+  'mark line' -> adds a small comment '//marked' to the final outputted script.
 
   Pressing 'i' allows you to select the shape being hovered over with the mouse. A guide on scaling, moving, and deletion is printed when pressing 'control selected'.
   
