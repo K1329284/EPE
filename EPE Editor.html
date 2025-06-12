@@ -35,7 +35,7 @@ var speed_is_limited = false;
 
 // Should the player die when squished by a moving wall?
 // If false it pushes the player inside the wall which may cause problems.
-var squish_does_kill = true;
+var squish_does_kill = false;
 // Set this to false when you want the players to use trial and error to figure things out or be given what links to.
 var do_draw_linking_codes = true;
 
@@ -754,6 +754,7 @@ function checkCollisions(){
                 boostPower: b.boostPower*(player.zpos > 2 ? !b.canBeJumped : true),
                 moved:!!b.doesMove && (player.zpos < 2) && (!b.flickers || flickerCurrentlyExists(b)),
                 isWall:b.coll && !b.kills && !b.canBeJumped,
+                isHurd: b.canBeJumped && b.coll && !b.kills,
                 movingVertical:!!b.moveVert,
                 moveSpeed:b.moveSpeed,
                 moveDirection:b.dir,
@@ -1129,7 +1130,20 @@ function movementMath(){
         player.zpos = 0;
     }
 }
-var m;
+
+function sign(x){
+    if(x > 0){
+        return 1;
+    }
+    else if(x < 0){
+        return -1;
+    }
+    else{
+        return 0;
+    }
+}
+
+var m, xSign, ySign;
 function specialCollision(){
     m = checkCollisions();
     foo = boxes[m.boxID];
@@ -1530,6 +1544,8 @@ Button.prototype.isReleased = function() {
 };
 //}
 
+var debugMenuButton = new Button(5, height-25, 50, 20, "Debug", 10);
+
 var freecamButton = new Button(5, 35, 50, 20, "Freecam", 12);
 var killButton = new Button(5, 5, 50, 20, "Kill", 13);
 var immortalButton = new Button(5, 65, 50, 20, "Immortal", 12);
@@ -1537,7 +1553,8 @@ var mortalButton = new Button(5, 95, 50, 20, "Mortal", 12);
 var noclipButton = new Button(5, 125, 50, 20, "No Clip", 12);
 var hyperButton = new Button(5, 155, 50, 20, "Hyper", 12);
 var teleportButton = new Button(5, 185, 50, 20, "Put player", 10);
-var debugMenuButton = new Button(5, height-25, 50, 20, "Debug", 10);
+
+var debugAbilityButtons = [freecamButton, killButton, immortalButton, mortalButton, noclipButton, hyperButton, teleportButton];
 
 var gIsForced = false;
 var gID = 1/6;
@@ -1553,13 +1570,15 @@ var gMudSwitch = new Button(70, gID*30, 50, 20, "Mud", 12); gID++;
 var gBoosterSwitch = new Button(70, gID*30, 50, 20, "Booster", 12); gID++;
 var gTrampolineSwitch = new Button(70, gID*30, 50, 20, "Trampoline", 10); gID++;
 var gElasticWallSwitch = new Button(70, gID*30, 50, 20, "ElasticWall", 10); gID++;
-
-var gSwitches = [gWallSwitch, gHurdleSwitch, gPlatformSwitch, gPathSwitch, gEraserSwitch, gHoleSwitch, gVoidSwitch, gIceSwitch, gMudSwitch, gBoosterSwitch, gTrampolineSwitch, gElasticWallSwitch];
-
 var gPlaceholderSwitch = new Button(135, 5, 50, 20, "Template", 12);
+
+var gSwitches = [gPlaceholderSwitch, gWallSwitch, gHurdleSwitch, gPlatformSwitch, gPathSwitch, gEraserSwitch, gHoleSwitch, gVoidSwitch, gIceSwitch, gMudSwitch, gBoosterSwitch, gTrampolineSwitch, gElasticWallSwitch];
+
 var gForceSwitch = new Button(135, 35, 50, 20, "Force", 12);
 var boxCreationButton = new Button(135, 65, 50, 20, "Put Box", 13);
 var compileAllButton = new Button(135, 95, 50, 50, "Copy\nAll\nCode", 12);
+
+var important
 
 var deleteLastButton = new Button(200, 5, 50, 25, "Delete\nPrevious", 10);
 var undoLastDeleteButton = new Button(200, 40, 50, 25, "Undo\nDelete", 10);
@@ -1569,7 +1588,8 @@ var markSelectedButton = new Button(200, 145, 50, 25, "Mark\nSelected", 10);
 var printSelectedButton = new Button(200, 180, 50, 25, "Print\nSelected", 10);
 var bringSelectedToFrontButton = new Button(200, 215, 50, 25, "Bring\nTo Front", 10);
 var bringSelectedToBackButton = new Button(200, 250, 50, 25, "Bring\nTo Back", 10);
-var deselectButton = new Button(200, 285, 50, 25, "Deselect", 10);
+var forceSelectedButton = new Button(200, 285, 50, 25, "Force\nSelected", 10);
+var deselectButton = new Button(200, 320, 50, 25, "Deselect", 10);
 
 box_types = [
     "WALL",                // SOLID, FORCED
@@ -1611,11 +1631,15 @@ var noComplexPartsBoxes = [
     Mud,            "Mud"
 ];
 
-// Takes value, x, y, w, h
-var startingInputBoxes = [
+// Takes number, x, y, w, h
+var startingNumberInputBoxes = [
     Booster,            "Booster",
     Trampoline,         "Trampoline",
     ElasticWall,        "ElasticWall",
+];
+
+// Takes string, x, y, w, h
+var startingStringInputBoxes = [
     Key,                "Key",
     ActiveKey,          "ActiveKey",
     LockedWall,         "LockedWall",
@@ -1623,8 +1647,8 @@ var startingInputBoxes = [
     LockedPlatform,     "LockedPlatform"
 ];
 
-// Takes x, y, value, w, h
-var middleInputBoxes = [
+// Takes x, y, string, w, h
+var middleStringInputBoxes = [
     Checkpoint,             "Checkpoint",
     ForcedCheckpoint,       "ForcedCheckpoint",
     TeleporterIn,           "TeleporterIn",
@@ -1636,8 +1660,8 @@ var middleInputBoxes = [
     ForcedWormhole,         "ForcedWormhole"
 ];
 
-// Takes x, y, w, h, value1, value2
-var endInputBoxes = [
+// Takes x, y, w, h, number, number
+var endDoubleNumberInputBoxes = [
     TeleporterTo,           "TeleporterTo",
     ForcedTeleporterTo,     "ForcedTeleporterTo",
     Conveyor,               "Conveyor",
@@ -1793,20 +1817,77 @@ draw = function() {
             iters = 0;
             citers = 0;
             while(checkCollisions().collided && player.alive){
+                // reverse adding elastic power before setting to 0
+                xmove -= elasticPower.x;
+                ymove -= elasticPower.y;
                 elasticPower.x = 0;
                 elasticPower.y = 0;
                 iters += 1;
+
+                // Basic collision detection
                 player.xpos -= xmove;
                 if(checkCollisions().collided){
                     player.ypos -= ymove;
                     player.xpos += xmove;
                     citers++;
                 }
+
+                // Check for squishing
                 if(iters > 1){
                     if(citers > 1 && !checkCollisions().wasJumpable && squish_does_kill){
                         killPlayer();
                     }
                     break;
+                }
+
+                // Heavy-duty collision detection, only runs if the basic one
+                var heavyCollisions = checkCollisions();
+                if(heavyCollisions.collided && !heavyCollisions.isHurd){
+                    // This might get complicated
+                    // First we need to find what side of the box is closest to make the player exit that way
+
+                    // Get box
+                    var b = boxes[heavyCollisions.boxID];
+                    
+                    // Get center
+                    var centerX = b.xpos + b.width/2;
+                    var centerY = b.ypos + b.height/2;
+
+                    // Get distance to center
+                    var distX = player.xpos - centerX;
+                    var distY = player.ypos - centerY;
+
+                    // Get radius on all sides
+                    var radiusX = b.width/2;
+                    var radiusY = b.height/2;
+
+                    // Find which edge the player is closest to
+                    var xFactor = abs(distX / radiusX);
+                    var yFactor = abs(distY / radiusY);
+
+                    // Get the sign of the distance
+                    xSign = distX > 0 ? 1 : -1;
+                    ySign = distY > 0 ? 1 : -1;
+
+                    if(xFactor > yFactor){
+                        // it is closer to the left or right
+                        if(xSign < 0){
+                            player.xpos = b.xpos - 5;
+                        }
+                        else{
+                            player.xpos = b.xpos + b.width + 5;
+                        }
+                    }
+                    else{
+                        // it is closer to the top or bottom
+                        if(ySign < 0){
+                            player.ypos = b.ypos - 5;
+                        }
+                        else{
+                            player.ypos = b.ypos + b.height + 5;
+                        }
+                    }
+
                 }
             } pdz = dz;
             
@@ -1822,20 +1903,15 @@ draw = function() {
 
     if(isOnMenu){
         // Debug hacks
-        killButton.draw();
-        freecamButton.draw();
-        mortalButton.draw();
-        immortalButton.draw();
-        noclipButton.draw();
-        hyperButton.draw();
-        teleportButton.draw();
+        for(var i = 0; i < debugAbilityButtons.length; i++){
+            debugAbilityButtons[i].draw();
+        }
         
         for(var i = 0; i < gSwitches.length; i++){
             gSwitches[i].draw();
         }
         
         // Buttons for modifying
-        gPlaceholderSwitch.draw();
         deleteLastButton.draw();
         undoLastDeleteButton.draw();
         deleteSelectedButton.draw();
@@ -1845,8 +1921,9 @@ draw = function() {
         bringSelectedToFrontButton.draw();
         bringSelectedToBackButton.draw();
         boxCreationButton.draw();
+        forceSelectedButton.draw();
         deselectButton.draw();
-        gForceSwitch.draw()
+        gForceSwitch.draw();
 
         compileAllButton.draw();
 
@@ -1990,6 +2067,16 @@ draw = function() {
             }
             else{
                 println("No box selected to bring to back.");
+            }
+        }
+
+        else if(forceSelectedButton.isReleased()){
+            if (selectedBoxID >= 0){
+                b = boxes[selectedBoxID];
+                b.canBeJumped = !b.canBeJumped;
+            }
+            else{
+                println("No box selected to force.");
             }
         }
 
@@ -2149,6 +2236,7 @@ function ToJumpable(){
     b.canBeJumped = true;
 }
 
+ElasticWall(10,10,50,50)
 // End of copyable code for empty_epe.txt
 
     }};
