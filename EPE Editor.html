@@ -32,7 +32,6 @@ var show_timer = false;
 var show_deaths = false;
 var show_performance = true;
 var speed_is_limited = false;
-var final_script = [];
 
 // Should the player die when squished by a moving wall?
 // If false it pushes the player inside the wall which may cause problems.
@@ -42,6 +41,7 @@ var do_draw_linking_codes = true;
 
 //}
 
+// Start of copyable section for empty_epe.txt
 // Close this {
 frameRate(60);
 var hyper = false;
@@ -199,8 +199,8 @@ mouseClicked = function(){
     }
 
     // Ensuring it doesn't get flagged as malware by having it outside of the draw function's loop
-    if(compileButton.isOver()){
-        copyToClipboard(compileFinalScript());
+    if(compileAllButton.isOver()){
+        copyToClipboard(compileFinalScriptAll());
     }
 };
 
@@ -214,7 +214,6 @@ function createBox(){
     else{
         if(debugMode){
             g((x1-width)/5, (y1-height)/5, (x2-x1)/5, (y2-y1)/5);
-            final_script.push({name:gName.toUpperCase(), box:boxes[boxes.length - 1], marked: false});
         }
     }
 
@@ -360,12 +359,12 @@ function relock(keycode){
 function Textbox(x,y,message,ts,c){
     textboxes.push({xpos:x, ypos:y, message:message, textsize:ts ? ts : 30, color:c ? c : COLOR.BLACK});
 }
-function Box(x,y,w,h,col,coll,jumpable,deadly,message,isACheckpoint){
-    x = round(x);
-    y = round(y);
-    w = round(w);
-    h = round(h);
-    boxes.push({xpos:x*5, ypos:y*5, canBeJumped:jumpable, width:w, height:h, color:col, coll:coll, kills:deadly, isCheckpoint:isACheckpoint, message:message});
+function Box(boxObject){
+    boxObject.xpos = round(boxObject.xpos)*5;
+    boxObject.ypos = round(boxObject.ypos)*5;
+    boxObject.width = round(boxObject.width)*5;
+    boxObject.height = round(boxObject.height)*5;
+    boxes.push(boxObject);
 }
 function Wall(x,y,w,h,c){
     x = round(x);
@@ -609,7 +608,11 @@ function TextTrigger(x,y,m,w,h){
 
 //{
 function Floor(x,y,w,h,c){
-    floors.push({xpos:x*5, ypos:y*5, width:w*5, height:h*5, color:c ? c : COLOR.SILVER});
+    floors.push({xpos:x*5, ypos:y*5, width:w*5, height:h*5, color:c ? c : COLOR.SILVER, isEllipse:false});
+}
+
+function FloorEllipse(x,y,w,h,c){
+    floors.push({xpos:x*5, ypos:y*5, width:w*5, height:h*5, color:c ? c : COLOR.SILVER, isEllipse:true});
 }
 
 function Fog(){
@@ -713,7 +716,12 @@ function drawFloor(i){
     f = floors[i];
     fill(f.color);
     noStroke();
-    rect(f.xpos - player.xpos + width/2, f.ypos - player.ypos + height/2, f.width, f.height);
+    if(f.isEllipse){
+        ellipse(f.xpos - player.xpos + width/2, f.ypos - player.ypos + height/2, f.width, f.height);
+    }
+    else{
+        rect(f.xpos - player.xpos + width/2, f.ypos - player.ypos + height/2, f.width, f.height);
+    }
 }
 
 var playerInside = false;
@@ -1255,14 +1263,49 @@ function fixNegMovingBoxes(){
     }
 }
 
-function compileFinalScriptLine(i){
-    return final_script[i].name + "(" + final_script[i].box.xpos/5 + " " + final_script[i].box.ypos/5 + " " + final_script[i].box.width/5 + " " + final_script[i].box.height/5 + ")" + (final_script[i].box.marked ? " //marked" : "");
+function quote(text){
+    return "\"" + text + "\"";
 }
 
-function compileFinalScript(){
+function compileObjectToLine(box){
+    // This takes in an index of a box and returns a line of code that can be used to recreate the box in EPE format.
+    var b = boxes[box];
+    var type = typeFromObject(box).toUpperCase();
+    var line = type + " (" + b.xpos/5 + " " + b.ypos/5 + " " + b.width/5 + " " + b.height/5 + ")";
+    line += " COLOR (" + red(b.color) + " " + green(b.color) + " " + blue(b.color) + ")";
+    
+    if(b.advMoving){
+        /* Guide:
+        MOVING(xDis yDis travelTime)
+        b.xSpeed = xDistance/travelTime;
+        b.ySpeed = yDistance/travelTime;
+        b.travelTime = travelTime;
+        */
+        line += " MOVING(" + (b.xSpeed*b.travelTime) + " " + (b.ySpeed*b.travelTime) + " " + (b.travelTime) + ")";
+    }
+
+    if (b.flickers) {
+        line += " FLICKERING (" + b.existingTime + " " + b.missingTime + ")";
+    }
+
+    if(b.crumbles){
+        line += " CRUMBLING(" + b.crumbleTime + ")";
+    }
+
+    if (b.isInvisible) {
+        line += " INVISIBLE";
+    }
+
+    return line;
+}
+
+function compileFinalScriptAll(){
     var script = "";
-    for(var i = 0; i < final_script.length; i++){
-        script += compileFinalScriptLine(i) + "\n";
+    for(var j = 0; j < floors.length; j++){
+        script += "FLOOR(" + floors[j].xpos/5 + " " + floors[j].ypos/5 + " " + floors[j].width/5 + " " + floors[j].height/5 + ") COLOR(" + red(floors[j].color) + " " + green(floors[j].color) + " " + blue(floors[j].color) + ")\n";
+    }
+    for(var i = 0; i < boxes.length; i++){
+        script += compileObjectToLine(i) + "\n";
     }
     return script;
 }
@@ -1457,7 +1500,7 @@ var Button = function(xpos,ypos,wdt,hgt,txt,tsz,col,stk,thk,cnr,aln,txtcol){
 };
 Button.prototype.draw = function() {
     fill(this.color);
-    if(this.text === gName){
+    if(this.text.toUpperCase() === gName || this.text === "Unforce"){
         fill(lerpColor(this.color, color(72), 0.5));
     }
     stroke(this.stroke);
@@ -1495,21 +1538,208 @@ var noclipButton = new Button(5, 125, 50, 20, "No Clip", 12);
 var hyperButton = new Button(5, 155, 50, 20, "Hyper", 12);
 var teleportButton = new Button(5, 185, 50, 20, "Put player", 10);
 var debugMenuButton = new Button(5, height-25, 50, 20, "Debug", 10);
-var gWallSwitch = new Button(70, 5, 50, 20, "Wall", 12);
-var gPlatformSwitch = new Button(70, 35, 50, 20, "Platform", 12);
-var gPathSwitch = new Button(70, 65, 50, 20, "Path", 12);
-var gEraserSwitch = new Button(70, 95, 50, 20, "Eraser", 12);
-var gVoidSwitch = new Button(70, 125, 50, 20, "Void", 12);
-var gHurdleSwitch = new Button(70, 155, 50, 20, "Hurdle", 12);
+
+var gIsForced = false;
+var gID = 1/6;
+var gWallSwitch = new Button(70, gID*30, 50, 20, "Wall", 12); gID++; 
+var gHurdleSwitch = new Button(70, gID*30, 50, 20, "Hurdle", 12); gID++;
+var gPlatformSwitch = new Button(70, gID*30, 50, 20, "Platform", 12); gID++;
+var gPathSwitch = new Button(70, gID*30, 50, 20, "Path", 12); gID++;
+var gEraserSwitch = new Button(70, gID*30, 50, 20, "Eraser", 12); gID++;
+var gHoleSwitch = new Button(70, gID*30, 50, 20, "Hole", 12); gID++;
+var gVoidSwitch = new Button(70, gID*30, 50, 20, "Void", 12); gID++;
+var gIceSwitch = new Button(70, gID*30, 50, 20, "Ice", 12); gID++;
+var gMudSwitch = new Button(70, gID*30, 50, 20, "Mud", 12); gID++;
+var gBoosterSwitch = new Button(70, gID*30, 50, 20, "Booster", 12); gID++;
+var gTrampolineSwitch = new Button(70, gID*30, 50, 20, "Trampoline", 10); gID++;
+var gElasticWallSwitch = new Button(70, gID*30, 50, 20, "ElasticWall", 10); gID++;
+
+var gSwitches = [gWallSwitch, gHurdleSwitch, gPlatformSwitch, gPathSwitch, gEraserSwitch, gHoleSwitch, gVoidSwitch, gIceSwitch, gMudSwitch, gBoosterSwitch, gTrampolineSwitch, gElasticWallSwitch];
+
 var gPlaceholderSwitch = new Button(135, 5, 50, 20, "Template", 12);
-var boxCreationButton = new Button(135, 35, 50, 20, "Put Box", 13);
+var gForceSwitch = new Button(135, 35, 50, 20, "Force", 12);
+var boxCreationButton = new Button(135, 65, 50, 20, "Put Box", 13);
+var compileAllButton = new Button(135, 95, 50, 50, "Copy\nAll\nCode", 12);
+
 var deleteLastButton = new Button(200, 5, 50, 25, "Delete\nPrevious", 10);
 var undoLastDeleteButton = new Button(200, 40, 50, 25, "Undo\nDelete", 10);
 var deleteSelectedButton = new Button(200, 75, 50, 25, "Delete\nSelected", 10);
 var controlSelectedButton = new Button(200, 110, 50, 25, "Control\nSelected", 10);
 var markSelectedButton = new Button(200, 145, 50, 25, "Mark\nSelected", 10);
-g = Path;
-var age = 0; var citers = 0; var previousDeletes = []; var previousDeletedLines = [];
+var printSelectedButton = new Button(200, 180, 50, 25, "Print\nSelected", 10);
+var bringSelectedToFrontButton = new Button(200, 215, 50, 25, "Bring\nTo Front", 10);
+var bringSelectedToBackButton = new Button(200, 250, 50, 25, "Bring\nTo Back", 10);
+var deselectButton = new Button(200, 285, 50, 25, "Deselect", 10);
+
+box_types = [
+    "WALL",                // SOLID, FORCED
+    "HURDLE",              // SOLID, JUMPABLE
+    "PLATFORM",            // PAD, FORCED
+    "PATH",                // PAD, JUMPABLE
+    "ERASER",              // DEADLY, SOLID
+    "HOLE",                // DEADLY, JUMPABLE
+    "VOID",                // DEADLY, JUMPABLE
+    "ICE",                 // PAD, NO FRICTION, FORCED?
+    "MUD",                 // PAD, SLOWS, FORCED?
+    "CHECKPOINT",          // PAD, SETS SPAWN, FORCED? (requires {MESSAGE})
+    "TRAMPOLINE",          // PAD, MAKES YOU JUMP (requires {STRENGTH})
+    "ELASTICWALL",        // SOLID, PUSHES YOU BACK, FORCED (requires {STRENGTH})
+    "BOOSTER",             // PAD, ACCELERATES YOU, FORCED? (requires {STRENGTH})
+    "CONVEYOR",            // PAD, PUSHES YOU, FORCED? (requires {FORCE} as "x,y")
+    "TELEPORTERTO",       // PAD, TELEPORTS, FORCED? (requires {POSITION} as "x,y")
+    "TELEPORTERIN",       // PAD, TELEPORTS, FORCED? (requires {LINK CODE})
+    "TELEPORTEROUT",      // PAD, IS TELEPORTED TO (requires {LINK CODE})
+    "TELEPORTEROUTA",    // PAD, IS TELEPORTED TO, PRESERVES PROPORTIONS (requires {LINK CODE})
+    "WORMHOLE",            // PAD, TELEPORTS TO AND FROM, FORCED? (requires {LINK CODE})
+    "KEY",                 // PAD, SWITCHES ON/OFF, STARTS NOT PRESSED (requires {KEY CODE})
+    "ACTIVEKEY",          // PAD, SWITCHES ON/OFF, STARTS PRE-PRESSED (requires {KEY CODE})
+    "LOCKEDWALL",         // SOLID (when not active), FORCED (requires {KEY CODE})
+    "LOCKEDERASER",       // SOLID (when not active), FORCED (when not active), DEADLY (requires {KEY CODE})
+    "LOCKEDPLATFORM",     // PAD (when active, otherwise no effect) (requires {KEY CODE})
+]
+
+// Takes x, y, w, h
+var noComplexPartsBoxes = [
+    Wall,           "Wall",
+    Hurdle,         "Hurdle",
+    Platform,       "Platform",
+    Path,           "Path",
+    Eraser,         "Eraser",
+    Hole,           "Hole",
+    Void,           "Void",
+    Ice,            "Ice",
+    Mud,            "Mud"
+];
+
+// Takes value, x, y, w, h
+var startingInputBoxes = [
+    Booster,            "Booster",
+    Trampoline,         "Trampoline",
+    ElasticWall,        "ElasticWall",
+    Key,                "Key",
+    ActiveKey,          "ActiveKey",
+    LockedWall,         "LockedWall",
+    LockedEraser,       "LockedEraser",
+    LockedPlatform,     "LockedPlatform"
+];
+
+// Takes x, y, value, w, h
+var middleInputBoxes = [
+    Checkpoint,             "Checkpoint",
+    ForcedCheckpoint,       "ForcedCheckpoint",
+    TeleporterIn,           "TeleporterIn",
+    TeleporterInForced,     "TeleporterInForced",
+    TeleporterOut,          "TeleporterOut",
+    TeleporterOutA,         "TeleporterOutA",
+    TextTrigger,            "TextTrigger",
+    Wormhole,               "Wormhole",
+    ForcedWormhole,         "ForcedWormhole"
+];
+
+// Takes x, y, w, h, value1, value2
+var endInputBoxes = [
+    TeleporterTo,           "TeleporterTo",
+    ForcedTeleporterTo,     "ForcedTeleporterTo",
+    Conveyor,               "Conveyor",
+    ForcedConveyor,         "ForcedConveyor"
+];
+
+function switchGModeTo(mode){
+    // This function switches the mode of the g variable to the given mode and the gName variable to the name of the mode. Also takes into account the gIsForced variable.
+    if(gIsForced){
+        gName = "FORCED " + mode.toUpperCase();
+        println("// Object type switched to: FORCED " + mode.toUpperCase());
+    }
+    else{
+        gName = mode.toUpperCase();
+        println("// Object type switched to: " + mode.toUpperCase());
+    }
+    mode = mode.toUpperCase();
+
+    // Assign g to the corresponding function
+    switch (mode) {
+        case "WALL":
+            g = Wall;
+            break;
+        case "HURDLE":
+            g = Hurdle;
+            break;
+        case "PLATFORM":
+            g = Platform;
+            break;
+        case "PATH":
+            g = Path;
+            break;
+        case "ERASER":
+            g = Eraser;
+            break;
+        case "HOLE":
+            g = Hole;
+            break;
+        case "VOID":
+            g = Void;
+            break;
+        case "ICE":
+            g = gIsForced ? ForcedIce : Ice;
+            break;
+        case "MUD":
+            g = gIsForced ? ForcedMud : Mud;
+            break;
+        case "CHECKPOINT":
+            g = gIsForced ? ForcedCheckpoint : Checkpoint;
+            break;
+        case "TRAMPOLINE":
+            g = Trampoline;
+            break;
+        case "ELASTICWALL":
+            g = ElasticWall;
+            break;
+        case "BOOSTER":
+            g = gIsForced ? ForcedBooster : Booster;
+            break;
+        case "CONVEYOR":
+            g = gIsForced ? ForcedConveyor : Conveyor;
+            break;
+        case "TELEPORTER-TO":
+            g = gIsForced ? ForcedTeleporterTo : TeleporterTo;
+            break;
+        case "TELEPORTER-IN":
+            g = gIsForced ? TeleporterInForced : TeleporterIn;
+            break;
+        case "TELEPORTER-OUT":
+            g = TeleporterOut;
+            break;
+        case "TELEPORTER-OUT-A":
+            g = TeleporterOutA;
+            break;
+        case "WORMHOLE":
+            g = gIsForced ? ForcedWormhole : Wormhole;
+            break;
+        case "KEY":
+            g = Key;
+            break;
+        case "ACTIVE-KEY":
+            g = ActiveKey;
+            break;
+        case "LOCKED-WALL":
+            g = LockedWall;
+            break;
+        case "LOCKED-ERASER":
+            g = LockedEraser;
+            break;
+        case "LOCKED-PLATFORM":
+            g = LockedPlatform;
+            break;
+        default:
+            g = Template;
+            gName = "Template";
+            println("// Unknown type, defaulting to Template");
+    }
+}
+
+g = Wall;
+gName = "WALL";
+var age = 0; var citers = 0; var previousDeletes = [];
 draw = function() {
     if(victory){
         background(240);
@@ -1588,195 +1818,220 @@ draw = function() {
         inkeyp = inkey;
         inwormp = inworm;
         ptime = ctime;
-    
-        if(isOnMenu){
-            killButton.draw();
-            freecamButton.draw();
-            gWallSwitch.draw();
-            gPathSwitch.draw();
-            gPlatformSwitch.draw();
-            gEraserSwitch.draw();
-            gVoidSwitch.draw();
-            gHurdleSwitch.draw();
-            mortalButton.draw();
-            immortalButton.draw();
-            noclipButton.draw();
-            hyperButton.draw();
-            compileButton.draw();
-            teleportButton.draw();
-            gPlaceholderSwitch.draw();
-            deleteLastButton.draw();
-            undoLastDeleteButton.draw();
-            deleteSelectedButton.draw();
-            controlSelectedButton.draw();
-            markSelectedButton.draw();
-            boxCreationButton.draw();
-
-            if(killButton.isReleased()){
-                killPlayer();
-            }
-            else if(freecamButton.isReleased()){
-                if(freecamMode){
-                    freecamMode = false;
-                    player.xpos = camX - width/2;
-                    player.ypos = camY - height/2;
-                    camX = width/2;
-                    camY = height/2;
-                    xmove = 0;
-                    ymove = 0;
-                    dx = 0;
-                    dy = 0;
-                    speed = 1.1;
-                }
-                else{
-                    freecamMode = true;
-                    camX = player.xpos + width/2;
-                    camY = player.ypos + height/2;
-                    speed = 3;
-                }
-            }
-            else if(gWallSwitch.isReleased()){
-                gName = "Wall";
-                println("// Object type switched to: " + gName);
-                g = Wall;
-            }
-            else if(gVoidSwitch.isReleased()){
-                gName = "Void";
-                println("// Object type switched to: " + gName);
-                g = Void;
-            }
-            else if(gHurdleSwitch.isReleased()){
-                gName = "Hurdle";
-                println("// Object type switched to: " + gName);
-                g = Hurdle;
-            }
-            else if(gEraserSwitch.isReleased()){
-                gName = "Eraser";
-                println("// Object type switched to: " + gName);
-                g = Eraser;
-            }
-            else if(gPlatformSwitch.isReleased()){
-                gName = "Platform";
-                println("// Object type switched to: " + gName);
-                g = Platform;
-            }
-            else if(gPathSwitch.isReleased()){
-                gName = "Path";
-                println("// Object type switched to: " + gName);
-                g = Path;
-            }
-            else if(gPlaceholderSwitch.isReleased()){
-                gName = "{change this}";
-                println("// Object type switched to: PLACEHOLDER");
-                g = Template;
-            }
-            else if(mortalButton.isReleased()){
-                canDie = true;
-            }
-            else if(immortalButton.isReleased()){
-                canDie = false;
-            }
-            else if(noclipButton.isReleased()){
-                noclip = !noclip;
-            }
-            else if(hyperButton.isReleased()){
-                hyper = !hyper;
-            }
-            else if(teleportButton.isReleased()){
-                if(freecamMode){
-                    freecamMode = false;
-                    xmove = 0;
-                    ymove = 0;
-                    dx = 0;
-                    dy = 0;
-                    speed = 1.1;
-                    camX = width/2;
-                    camY = height/2;
-                }
-            }
-            else if(deleteLastButton.isReleased()){
-                // put the selection corners to the box being deleted
-                if (boxes.length > 0) {
-                    selectPos1.xpos = boxes[boxes.length - 1].xpos;
-                    selectPos1.ypos = boxes[boxes.length - 1].ypos;
-                    selectPos2.xpos = boxes[boxes.length - 1].xpos + boxes[boxes.length - 1].width/5;
-                    selectPos2.ypos = boxes[boxes.length - 1].ypos + boxes[boxes.length - 1].height/5;
-                }
-                
-                // Removing the last box from the array and putting it in a variable to undo it later
-                if(boxes.length > 0){
-                    previousDeletes.push(boxes.pop());
-                    previousDeletedLines.push(final_script.pop());
-                }
-            }
-            else if(undoLastDeleteButton.isReleased()){
-                if(previousDeletes.length > 0){
-                    boxes.push(previousDeletes.pop());
-                    final_script.push(previousDeletedLines.pop());
-                }
-            }
-            else if(deleteSelectedButton.isReleased()){
-                // put the selection corners to the box being deleted
-                if (boxes.length > 0 && selectedBoxID >= 0) {
-                    selectPos1.xpos = boxes[selectBox].xpos;
-                    selectPos1.ypos = boxes[selectBox].ypos;
-                    selectPos2.xpos = boxes[selectBox].xpos + boxes[selectBox].width/5;
-                    selectPos2.ypos = boxes[selectBox].ypos + boxes[selectBox].height/5;
-                }
-                
-                // Removing the selected box from the array and putting it in a variable to undo it later
-                if(boxes.length > 0 && selectedBoxID >= 0){
-                    previousDeletes.push(boxes.splice(selectBox, 1)[0]);
-                    previousDeletedLines.push(final_script.splice(selectBox, 1)[0]);
-                    selectedBoxID = -1;
-                    currentlyControllingBox = false;
-                }
-            }
-
-            else if(controlSelectedButton.isReleased()){
-                // put the selection corners to the box being controlled
-
-                if(boxes.length > 0 && selectedBoxID >= 0){
-                    if(!currentlyControllingBox){
-                        println("WASD to change size of the box.");
-                        println("Arrow keys to move the box.");
-                        println("Right click to move the box with the mouse.");
-                        println("Click button again to stop controlling");
-                        println("Press i to control a new box.");
-                    }
-                    currentlyControllingBox = !currentlyControllingBox;
-                }
-            }
-
-            else if(markSelectedButton.isReleased()){
-                if(boxes.length > 0 && selectedBoxID >= 0){
-                    boxes[selectedBoxID].marked = true;
-                }
-            }
-
-            else if(boxCreationButton.isReleased()){
-                createBox();
-            }
-        }
-        if(debugMode){
-            debugMenuButton.draw();
-            if(debugMenuButton.isReleased()){
-                isOnMenu = !isOnMenu;
-            }
-        }
-        YouNeedToRunThisEachFrameItMakesTheInputWork();
     }
+
+    if(isOnMenu){
+        // Debug hacks
+        killButton.draw();
+        freecamButton.draw();
+        mortalButton.draw();
+        immortalButton.draw();
+        noclipButton.draw();
+        hyperButton.draw();
+        teleportButton.draw();
+        
+        for(var i = 0; i < gSwitches.length; i++){
+            gSwitches[i].draw();
+        }
+        
+        // Buttons for modifying
+        gPlaceholderSwitch.draw();
+        deleteLastButton.draw();
+        undoLastDeleteButton.draw();
+        deleteSelectedButton.draw();
+        controlSelectedButton.draw();
+        markSelectedButton.draw();
+        printSelectedButton.draw();
+        bringSelectedToFrontButton.draw();
+        bringSelectedToBackButton.draw();
+        boxCreationButton.draw();
+        deselectButton.draw();
+        gForceSwitch.draw()
+
+        compileAllButton.draw();
+
+        if(killButton.isReleased()){
+            killPlayer();
+        }
+        else if(freecamButton.isReleased()){
+            if(freecamMode){
+                freecamMode = false;
+                player.xpos = camX - width/2;
+                player.ypos = camY - height/2;
+                camX = width/2;
+                camY = height/2;
+                xmove = 0;
+                ymove = 0;
+                dx = 0;
+                dy = 0;
+                speed = 1.1;
+            }
+            else{
+                freecamMode = true;
+                camX = player.xpos + width/2;
+                camY = player.ypos + height/2;
+                speed = 3;
+            }
+        }
+
+        // The gSwitches
+        for(var i = 0; i < gSwitches.length; i++){
+            if(gSwitches[i].isReleased()){
+                switchGModeTo(gSwitches[i].text);
+            }
+        }
+
+        if(mortalButton.isReleased()){
+            canDie = true;
+        }
+        else if(immortalButton.isReleased()){
+            canDie = false;
+        }
+        else if(noclipButton.isReleased()){
+            noclip = !noclip;
+        }
+        else if(hyperButton.isReleased()){
+            hyper = !hyper;
+        }
+        else if(teleportButton.isReleased()){
+            if(freecamMode){
+                freecamMode = false;
+                xmove = 0;
+                ymove = 0;
+                dx = 0;
+                dy = 0;
+                speed = 1.1;
+                camX = width/2;
+                camY = height/2;
+            }
+        }
+        else if(deleteLastButton.isReleased()){
+            // put the selection corners to the box being deleted
+            if (boxes.length > 0) {
+                selectPos1.xpos = boxes[boxes.length - 1].xpos;
+                selectPos1.ypos = boxes[boxes.length - 1].ypos;
+                selectPos2.xpos = boxes[boxes.length - 1].xpos + boxes[boxes.length - 1].width/5;
+                selectPos2.ypos = boxes[boxes.length - 1].ypos + boxes[boxes.length - 1].height/5;
+            }
+            
+            // Removing the last box from the array and putting it in a variable to undo it later
+            if(boxes.length > 0){
+                previousDeletes.push(boxes.pop());
+            }
+        }
+        else if(undoLastDeleteButton.isReleased()){
+            if(previousDeletes.length > 0){
+                boxes.push(previousDeletes.pop());
+            }
+        }
+        else if(deleteSelectedButton.isReleased()){
+            // put the selection corners to the box being deleted
+            if (boxes.length > 0 && selectedBoxID >= 0) {
+                selectPos1.xpos = boxes[selectedBoxID].xpos;
+                selectPos1.ypos = boxes[selectedBoxID].ypos;
+                selectPos2.xpos = boxes[selectedBoxID].xpos + boxes[selectedBoxID].width/5;
+                selectPos2.ypos = boxes[selectedBoxID].ypos + boxes[selectedBoxID].height/5;
+            }
+            
+            // Removing the selected box from the array and putting it in a variable to undo it later
+            if(boxes.length > 0 && selectedBoxID >= 0){
+                previousDeletes.push(boxes.splice(selectedBoxID, 1)[0]);
+                selectedBoxID = -1;
+                currentlyControllingBox = false;
+            }
+        }
+
+        else if(controlSelectedButton.isReleased()){
+            // put the selection corners to the box being controlled
+
+            if(boxes.length > 0 && selectedBoxID >= 0){
+                if(!currentlyControllingBox){
+                    println("WASD to change size of the box.");
+                    println("Arrow keys to move the box.");
+                    println("Right click to move the box with the mouse.");
+                    println("Click button again to stop controlling");
+                    println("Press i to control a new box.");
+                }
+                currentlyControllingBox = !currentlyControllingBox;
+            }
+        }
+
+        else if(markSelectedButton.isReleased()){
+            if(boxes.length > 0 && selectedBoxID >= 0){
+                boxes[selectedBoxID].marked = true;
+            }
+        }
+
+        else if(printSelectedButton.isReleased()){
+            if(boxes.length > 0 && selectedBoxID >= 0){
+                println(compileObjectToLine(selectedBoxID));
+            }
+            else{
+                println("No box selected to print.");
+            }
+        }
+
+        else if(bringSelectedToFrontButton.isReleased()){
+            if(selectedBoxID >= 0){
+                boxes.push(boxes.splice(selectedBoxID, 1)[0]);
+                selectedBoxID = boxes.length - 1;
+            }
+            else{
+                println("No box selected to bring to front.");
+            }
+        }
+
+        else if(bringSelectedToBackButton.isReleased()){
+            // If the button is pressed, we bring the selected box to the back. By placing it at the start of the array.
+            if (selectedBoxID >= 0){
+                b = boxes.splice(selectedBoxID, 1)[0];
+                boxes.unshift(b);
+                selectedBoxID = 0;
+            }
+            else{
+                println("No box selected to bring to back.");
+            }
+        }
+
+        else if(deselectButton.isReleased()){
+            // Both removes the selection corners and deselects the box. This should be two different buttons but is one to avoid confusion..
+            selectedBoxID = -1;
+            currentlyControllingBox = false;
+            selectPos1.xpos = 0;
+            selectPos1.ypos = 0;
+            selectPos2.xpos = 0;
+            selectPos2.ypos = 0;
+        }
+
+        else if(compileAllButton.isReleased()){
+            copyToClipboard(compileFinalScriptAll());
+        }
+
+        else if(boxCreationButton.isReleased()){
+            createBox();
+        }
+
+        else if(gForceSwitch.isReleased()){
+            gIsForced = !gIsForced;
+            gForceSwitch.text = gIsForced ? "Unforce" : "Force";
+        }
+    }
+    if(debugMode){
+        debugMenuButton.draw();
+        if(debugMenuButton.isReleased()){
+            isOnMenu = !isOnMenu;
+        }
+    }
+    YouNeedToRunThisEachFrameItMakesTheInputWork();
 
     mouseIsPressed = false;
 };
-
-var compileButton = new Button(135, 65, 50, 50, "Copy\nCode", 16);
 
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
       println("Code copied to clipboard!");
     }).catch(err => {
-      println("Error copying code\n\n\n");
+      println("Cannot copy, here:\n\n\n");
       println(text);
     });
 }
@@ -1809,6 +2064,7 @@ function ToInvisible(){
     b.isInvisible = true;
 }
 
+/*
 function ToMoving(mT,mD,mV){
     b = boxes[boxes.length - 1];
     b.moveSpeed = mT;
@@ -1830,6 +2086,7 @@ function ToMoving2(xSpeed, ySpeed, travelTime){
     b.doesMove = true;
     b.advMoving = true;
 }
+*/
 
 function ToMoving3(xDistance, yDistance, travelTime){
     b = boxes[boxes.length - 1];
@@ -1891,6 +2148,8 @@ function ToJumpable(){
     b = boxes[boxes.length - 1];
     b.canBeJumped = true;
 }
+
+// End of copyable code for empty_epe.txt
 
     }};
 

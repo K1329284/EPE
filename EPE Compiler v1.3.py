@@ -1,6 +1,34 @@
 import os
 import re
 
+
+"""
+A compiler built for Evan's Parkour Engine (EPE), a custom engine for simple parkour games.
+This script is also made by Evan, the creator of EPE.
+The engine itself is written in ProcessingJS, a JavaScript library that allows for easy drawing and animation.
+Whilst this script is written in Python, it compiles EPE files into a format that can be used by the engine.
+And attached in this folder is the "EPE Editor.html" file, which allows you to get some EPE script basics made with a game-engine style environment.
+
+
+|--- Version History ---|
+| 
+| -- v1.0 --
+| Set up everything, added basic functions and parsing.
+| 
+| -- v1.1 --
+| Added support for OFFSET and ORIGIN commands, which allow for easy mass movement of objects.
+| 
+| -- v1.2 --
+| Added Wormhole and ForcedWormhole since it was somehow missing.
+| 
+| -- v1.3 --
+| Added a ton of new possible alt-names for box types. My favorite are "ENTRANCE", "EXIT", "PUSHER", "MEANY", and "V" which are all useful or funny.
+| Added support for boxify() and FloorEllipse type, which allows for easy creation of custom box objects.
+|
+|-----------------------|
+
+"""
+
 def cap(string: str) -> str:
     if string:
         return string[0].upper() + string[1:].lower()
@@ -10,9 +38,6 @@ def collapse(value: str) -> str:
     if value != None:
         return str(value)
     return ""
-
-def ternary(expression:bool, trueResult:object, falseResult:object) -> object:
-    return trueResult if expression else falseResult
 
 def getEPE() -> list[str]:
     # Get the directory of the current script
@@ -58,6 +83,60 @@ COLLAPSING (TIME_TO_COLLAPSE)
 
 """
 
+def boxify(line: str) -> str:
+    """ Converts a line with BOX properties into a type that can be used in the EPE engine."""
+    # One part of the EPE is custom box objects, which are defined as [*Properties] BOX (X, Y, WIDTH, HEIGHT)
+    # So basically this function will convert the properties into a type to be used in the EPE engine.
+
+    try:
+
+        line.replace("PAD", "JUMPABLE NONSOLID")  # Convert PAD to JUMPABLE NONSOLID for compatibility
+        line.replace("ZONE", "FORCED NONSOLID")  # Convert ZONE to JUMPABLE NONSOLID for compatibility
+
+        # first get the properties
+        properties:list[str] = line.split("BOX")[0].strip().split(" ")
+        props:list[str] = [prop for prop in properties if prop]  # Remove empty strings
+
+        isLethal = any(keyword in props for keyword in ["DEADLY", "LETHAL", "KILLER", "DEATH", "DANGER", "DANGEROUS", "HURTFUL"])
+        if isLethal and any(keyword in props for keyword in ["SAFE", "NONLETHAL"]):
+            raise Exception("Cannot be both lethal and non-lethal at the same time.")
+
+        isSolid = any(keyword in props for keyword in ["SOLID", "COLLISION", "BLOCK", "HARD", "UNPASSABLE"])
+        if isSolid and any(keyword in props for keyword in ["NONSOLID", "SOFT"]):
+            raise Exception("Cannot be both solid and non-solid at the same time.")
+        
+        isJumpable = any(keyword in props for keyword in ["JUMPABLE", "NONFORCED", "UNFORCED", "SHORT"])
+        if isJumpable and any(keyword in props for keyword in ["FORCED", "TALL"]):
+            raise Exception("Cannot be both jumpable and forced at the same time.")
+        
+        isBlack = any(keyword in props for keyword in ["BLACK", "DARK"])
+        
+        secondHalf = line.split("BOX")[1].strip()
+        if not isLethal:
+            if isSolid and isJumpable:
+                return "HURDLE" + secondHalf  # Hurdle is a solid, jumpable object
+            elif isSolid and not isJumpable:
+                return "WALL" + secondHalf
+            elif not isSolid and isJumpable:
+                return "PLATFORM" + secondHalf
+            elif not isSolid and not isJumpable:
+                return "PATH" + secondHalf
+        elif isLethal:
+            if isSolid:
+                return "ERASER" + secondHalf
+            elif not isSolid:
+                if isBlack:
+                    return "VOID" + secondHalf
+                return "HOLE" + secondHalf
+            
+        raise Exception("Invalid combination of properties. Please check the properties used in the BOX definition.")
+
+    except Exception as e:
+        print(f"Error trying to boxify line: {line}. Error: {e}")
+        # Return all things as "Template" so it doesn't break the code by replacing everything from "BOX" and before to "Template"
+        return "Template" + line.split("BOX")[1]
+
+
 xoffset = 0
 yoffset = 0
 def parseEPEline(line: str) -> dict:
@@ -70,16 +149,19 @@ def parseEPEline(line: str) -> dict:
             dividedLine[i] = dividedLine[i].upper()
     line = ''.join(dividedLine)
 
+    if "BOX" in line:
+        line = boxify(line)
+
     if line.startswith("FORCED "):
         line = line.replace("FORCED ", "FORCED")
     elif line.startswith("ACTIVE "):
         line = line.replace("ACTIVE ", "ACTIVE")
     elif line.startswith("LOCKED "):
         line = line.replace("LOCKED ", "LOCKED")
-    elif line.startswith("Elastic "):
-        line = line.replace("Elastic ", "Elastic")
+    elif line.startswith("ELASTIC "):
+        line = line.replace("ELASTIC ", "ELASTIC")
 
-    # Initialize the dictionary with None values
+    # Initialize the dictionary with None or "false" values
     data = {
         "type": None, "x": None, "y": None, "width": None, "height": None,
         "color": None, "special value": None, "is moving": "false",
@@ -162,89 +244,98 @@ def parseEPEline(line: str) -> dict:
 import time
 def typeToName(type:str) -> str:
     print(type.replace("-", "").replace("_", "").replace("'", "").upper())
-    time.sleep(0.01)  # Add a small delay to allow for debugging
+    time.sleep(0.01)  # Add a small delay for effect, can be removed if not needed
     match type.replace("-", "").replace("_", "").replace("'", "").upper():  # Normalize the type for matching
-        case "WALL":
+        case "WALL" | "SOLID" | "BLOCK" | "W" | "STOP":
             return "Wall"
-        case "HURDLE" | "HURD":
+        case "HURDLE" | "HURD" | "SHORTWALL" | "H" | "JUMPABLE":
             return "Hurdle"
-        case "PLATFORM" | "PLAT":
+        case "PLATFORM" | "PLAT" | "ZONE":
             return "Platform"
-        case "PATH":
+        case "PATH" | "PAD" | "WALKY":
             return "Path"
-        case "ERASER" | "KILLERWALL" | "DEATHWALL" | "KILLBRICK" | "LAVA":
+        case "ERASER" | "KILLERWALL" | "DEATHWALL" | "KILLBRICK" | "LAVA" | "E" | "X" | "L" | "OUCH" | "MEANY":
             return "Eraser"
-        case "CHECKPOINT" | "SPAWNPOINT" | "SAVEPOINT" | "SAVESPOT": 
+        case "CHECKPOINT" | "SPAWNPOINT" | "SAVEPOINT" | "SAVESPOT" | "CP" | "SP" | "SAVE" | "YIPPEE": 
             return "Checkpoint"
-        case "FORCEDCHECKPOINT" | "FORCEDSAVEPOINT" | "FORCEDSPAWNPOINT" | "FORCEDSAVESPOT":
+        case "FORCEDCHECKPOINT" | "FORCEDSAVEPOINT" | "FORCEDSPAWNPOINT" | "FORCEDSAVESPOT" | "FCP" | "FYIPPEE":
             return "ForcedCheckpoint"
-        case "TELEPORTERIN" | "INTELEPORTER" | "TPIN" | "INTP":
+        case "TELEPORTERIN" | "INTELEPORTER" | "TPIN" | "INTP" | "TPI" | "TELEIN" | "INTELE" | "ENTRANCE":
             return "TeleporterIn"
-        case "TELEPORTEROUT" | "OUTTELEPORTER" | "TPOUT" | "OUTTP":
+        case "TELEPORTEROUT" | "OUTTELEPORTER" | "TPOUT" | "OUTTP" | "TPO" | "TELEOUT" | "OUTTELE" | "EXIT" | "EXIT1":
             return "TeleporterOut"
-        case "TELEPORTERINFORCED" | "FORCEDTELEPORTERIN" | "FORCEDTPIN" | "FORCEDINTP" | "INTPFORCED" | "TPINFORCED":
+        case "TELEPORTERINFORCED" | "FORCEDTELEPORTERIN" | "FORCEDTPIN" | "FORCEDINTP" | "INTPFORCED" | "TPINFORCED" | "FTPIN" | "FTPI" | "FORCEDINTELE" | "FORCEDTELEIN" | "FORCEDENTRANCE" | "FENTRANCE":
             return "TeleporterInForced"
-        case "TELEPORTEROUTA" | "PROPORTIONALTELEPORTEROUT" | "PROPTELEPORTEROUT" | "TPOUTA" | "OUTTPA" | "PROPTPOUT" | "PROPOUTTP":
+        case "TELEPORTEROUTA" | "PROPORTIONALTELEPORTEROUT" | "PROPTELEPORTEROUT" | "TPOUTA" | "OUTTPA" | "PROPTPOUT" | "PROPOUTTP" | "TPOA" | "TELEOUTA" | "OUTTELEA" | "EXITA" | "PROPEXIT" | "EXIT2":
             return "TeleporterOutA"
-        case "TELEPORTERTO" | "TOTELEPORTER":
+        case "TELEPORTERTO" | "TOTELEPORTER" | "TPTO" | "TP2" | "TT" | "GOTO" | "TELEPORTTO":
             return "TeleporterTo"
-        case "KEY" | "BUTTON" | "LEVER" | "SWITCH":
+        case "WORMHOLE" | "TELEPORTERPAIR" | "LINKEDTELEPORTER" | "WH":
+            return "Wormhole"
+        case "FORCEDWORMHOLE" | "FORCEDTELEPORTERPAIR" | "FORCEDLINKEDTELEPORTER" | "FWH":
+            return "ForcedWormhole"
+        case "KEY" | "BUTTON" | "LEVER" | "SWITCH" | "BTN":
             return "Key"
-        case "ACTIVEKEY" | "ACTIVEBUTTON" | "ACTIVELEVER" | "ACTIVESWITCH":
+        case "ACTIVEKEY" | "ACTIVEBUTTON" | "ACTIVELEVER" | "ACTIVESWITCH" | "AKEY" | "ABTN" | "ALVR":
             return "ActiveKey"
-        case "TRAMPOLINE" | "BOUNCEPAD":
+        case "TRAMPOLINE" | "BOUNCEPAD" | "TRAMP" | "BOUNCE" | "FORCEDTRAMPOLINE" | "FORCEDBOUNCEPAD" | "FORCEDTRAMP" | "FORCEDBOUNCE":
             return "Trampoline"
-        case "BOOSTER" | "SPEEDPAD":
+        case "BOOSTER" | "SPEEDPAD" | "BOOST" | "BSTR":
             return "Booster"
-        case "FORCEDBOOSTER" | "FORCEDSPEEDPAD":
+        case "FORCEDBOOSTER" | "FORCEDSPEEDPAD" | "FORCEDBOOST" | "FBSTR":
             return "ForcedBooster"
-        case "LOCKEDWALL" | "LOCKEDDOOR":
+        case "LOCKEDWALL" | "LOCKEDDOOR" | "DOOR" | "LWALL" | "LDOOR" | "LW":
             return "LockedWall"
-        case "LOCKEDERASER" | "LOCKEDKILLERWALL":
+        case "LOCKEDERASER" | "LOCKEDKILLERWALL" | "LOCKEDDEATHWALL" | "LOCKEDKILLBRICK" | "LOCKEDLAVA" | "LERASER" | "LKILLER" | "LE":
             return "LockedEraser"
-        case "LOCKEDPLATFORM" | "LOCKEDPLAT":
+        case "LOCKEDPLATFORM" | "LOCKEDPLAT" | "LPLATFORM" | "LPLAT" | "LP":
             return "LockedPlatform"
-        case "ELASTICWALL" | "BOUNCEWALL" | "RUBBERWALL":
+        case "ELASTICWALL" | "BOUNCEOFF" | "BOUNCEWALL" | "RUBBER" | "RUBBERWALL" | "BOING" | "BOINGWALL" | "ELASTIC" | "EW":
             return "ElasticWall"
         case "TEXTBOX" | "TEXT":
             return "TextBox"
         case "TEXTTRIGGER" | "MESSAGETRIGGER" | "TRIGGER":
             return "TextTrigger"
-        case "MUD" | "QUICKSAND" | "SLOWPAD":
+        case "MUD" | "QUICKSAND" | "SLOWPAD" | "M":
             return "Mud"
-        case "FORCEDMUD" | "FORCEDQUICKSAND" | "FORCEDSLOWPAD":
+        case "FORCEDMUD" | "FORCEDQUICKSAND" | "SLOWZONE" | "FMUD" | "FM":
             return "ForcedMud"
-        case "ICE" | "SMOOTHPAD":
+        case "ICE" | "SMOOTHPAD" | "FREEZEPAD" | "FROZEN" | "GLIDE":
             return "Ice"
-        case "FORCEDICE" | "FORCEDSMOOTHPAD":
+        case "FORCEDICE" | "SMOOTHZONE" | "FORCEDFROZEN" | "FORCEDGLIDE" | "FREEZEZONE" | "FICE":
             return "ForcedIce"
-        case "FLOOR" | "GROUND" | "BASE" | "FLOORING" | "BACKGROUND":
+        case "FLOOR" | "GROUND" | "BASE" | "FLOORING" | "BACKGROUND" | "RECTFLOOR" | "FLOORRECT" | "GROUNDRECT" | "BACKGROUNDRECT" | "RECTBACKGROUND" | "RECT":
             return "Floor"
-        case "VOID" | "EMPTYSPACE" | "OUTOFBOUNDS" | "DEATHZONE":
+        case "FLOORELLIPSE" | "RUG" | "OVALFLOOR" | "OVALGROUND" | "OVALBASE" | "OVALFLOORING" | "OVALBACKGROUND" | "FLOOROVAL" | "ELLIPSEFLOOR" | "ELLIPSEGROUND" | "ELLIPSEBASE" | "ELLIPSEFLOORING" | "ELLIPSEBACKGROUND" | "GROUNDELLIPSE" | "BACKGROUNDELLIPSE" | "ELLIPSE" | "OVAL" | "CIRCLE":
+            # Handle different variations of floor ellipse
+            return "FloorEllipse"
+        case "VOID" | "EMPTYSPACE" | "OUTOFBOUNDS" | "DEATHZONE" | "V":
             return "Void"
-        case "HOLE" | "PIT":
+        case "HOLE" | "PIT" | "LETHALPAD" | "FALL":
             return "Hole"
-        case "CONVEYOR" | "CONVEYORBELT" | "PUSHPAD":
+        case "CONVEYOR" | "CONVEYORBELT" | "PUSHPAD" | "PUSHER":
             return "Conveyor"
-        case "FORCEDCONVEYOR" | "FORCEDCONVEYORBELT" | "FORCEDPUSHPAD":
+        case "FORCEDCONVEYOR" | "FORCEDCONVEYORBELT" | "PUSHZONE" | "FORCEDPUSHPAD" | "FORCEDPUSHER" | "FCONVEYOR" | "FPUSHER":
             return "ForcedConveyor"
-        case "WIN" | "FINISH":
+        case "WIN" | "FINISH" | "END" | "GOAL":
             return "Win"
         case _:
+            if type.startswith("FORCED"):
+                return typeToName(type[7:])  # Remove "FORCED" prefix and try again
             return type
 
 def compileEPEline(line:str) -> str:
     if not line or line.strip() == "":
         return ""
     elif  line.startswith('//') or line.startswith('#'):
-        return line.replace('#', '//') + "\n"  # Preserve comments in the output, replace # with // for JS compatibility
+        return line.replace('#', '//') + "\n"  # Preserve comments in the output, replace # with // for JS compatibility, multiline comments are not supported in this format.
     parsed_line = parseEPEline(line)
     # Check if the line is valid
     if not parsed_line:
         return "" # Return empty string for OFFSET and ORIGIN
     if parsed_line['type'] == None:
         return f"println('invalid line: {line}');\n"
-    returned = ''
+    returned = ""
 
     _type = typeToName(parsed_line['type'])
     _x = str(int(parsed_line['x']) + xoffset)
@@ -258,7 +349,7 @@ def compileEPEline(line:str) -> str:
         case 'Win' | 'Wall' | 'Hurdle' | 'Platform' | 'Path' | 'Eraser' | 'Hole' | 'Void' | 'Mud' | 'ForcedMud' | 'Ice' | 'ForcedIce' | 'Floor': 
             returned += f'{_type}({_x}, {_y}, {_width}, {_height}, {_color});'
         
-        case 'Checkpoint' | 'ForcedCheckpoint' | 'TeleporterIn' | 'TeleporterInForced' | 'TeleporterOut' | 'TeleporterOutA' | 'TextTrigger':
+        case 'Checkpoint' | 'ForcedCheckpoint' | 'TeleporterIn' | 'TeleporterInForced' | 'TeleporterOut' | 'TeleporterOutA' | 'TextTrigger' | 'Wormhole' | 'ForcedWormhole':
             returned += f'{_type}({_x}, {_y}, {_special}, {_width if _width != None else '16'}, {_height if _height != None else '16'}, {_color});'
         
         case 'Key' | 'ActiveKey':
@@ -267,7 +358,7 @@ def compileEPEline(line:str) -> str:
         case 'Trampoline' | 'Booster' | 'ForcedBooster' | 'LockedWall' | 'LockedEraser' | 'LockedPlatform' | 'ElasticWall':
             returned += f'{_type}({_special}, {_x}, {_y}, {_width}, {_height}, {_color});'
         
-        case 'Conveyor' | 'ForcedConveyor' | 'TeleporterTo' | 'TeleporterFrom':
+        case 'Conveyor' | 'ForcedConveyor' | 'TeleporterTo' | 'ForcedTeleporterTo':
             returned += f'{_type}({_x}, {_y}, {_width}, {_height}, {_special}, {_color});'
         
         case 'TextBox':
@@ -393,7 +484,7 @@ var do_draw_linking_codes = {gamerules["DRAW_LINK_CODES"]};
 
     return "SUCCESS"
 
-print("EPE Compiler v1.0")
+print("EPE Compiler v1.1")
 print("EPE (Evan's Parkour Engine) is a custom engine for simple parkour games.")
 print("This script will compile EPE files into a format that can be used by the engine.")
 print("Please ensure that the EPE files are in the same folder as this script.")
